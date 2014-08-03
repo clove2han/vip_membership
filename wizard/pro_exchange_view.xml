@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="view_charge_form">
+            <field name="name">member.charge.form</field>
+            <field name="model">member.charge</field>
+            <field name="arch" type="xml">
+                <form string="充值表单" version="7.0">
+	                <separator string="填写表单为该会员充值:" colspan="4" />
+	                <group>
+	                    <field name="charge_amount"/>
+	                    <field name="charge_type"/>
+	                    <field name="comment" />
+	                </group>
+	                <footer>
+                        <button name="run" string="充值" type="object" class="oe_highlight"/>
+                         or 
+                        <button special="cancel" string="取消" class="oe_link"/>
+                    </footer>
+             	</form>
+            </field>
+        </record>
+		<record model="ir.ui.view" id="view_member_charge_level_form">
+            <field name="name">member.charge.level.form</field>
+            <field name="model">member.charge.level</field>
+            <field name="arch" type="xml">
+                <form string="确认表单" version="7.0">
+	                <group>
+	                    <field name="comment" nolabel="1"/>
+	                </group>
+	                <footer>
+                        <button name="run" string="确定" type="object" class="oe_highlight"/>
+                         or 
+                        <button special="cancel" string="取消" class="oe_link"/>
+                    </footer>
+             	</form>
+            </field>
+        </record>
+        <!-- 会员充值 -->
+        <record model="ir.actions.act_window" id="action_membership_smallpos_charge">
+            <field name="name">会员充值</field>
+            <field name="view_mode">form</field>
+            <field name="res_model">member.charge</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_charge_view_form">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_charge_form"/>
+            <field name="target">new</field>
+            <field name="act_window_id" ref="action_membership_smallpos_charge"/>
+        </record>
+    </data>
+</openerp>

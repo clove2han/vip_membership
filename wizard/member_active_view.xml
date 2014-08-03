@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <!-- 会员激活 -->
+		<record model="ir.ui.view" id="view_member_active_form">
+            <field name="name">member.active.form</field>
+            <field name="model">member.active</field>
+            <field name="arch" type="xml">
+                <form string="确认表单" version="7.0">
+	                <group>
+	                    <field name="comment" nolabel="1"/>
+	                </group>
+	                <footer>
+                        <button name="run" string="确定" type="object" class="oe_highlight"/>
+                         or 
+                        <button special="cancel" string="取消" class="oe_link"/>
+                    </footer>
+             	</form>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="action_member_active">
+            <field name="name">会员激活</field>
+            <field name="view_mode">form</field>
+            <field name="res_model">member.active</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_member_active_view_form">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_member_active_form"/>
+            <field name="target">new</field>
+            <field name="act_window_id" ref="action_member_active"/>
+        </record>
+    </data>
+</openerp>

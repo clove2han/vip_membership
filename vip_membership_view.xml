@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <!-- 会员列表 -->
+		<record model="ir.ui.view" id="view_member_tree">
+            <field name="name">vip.member.tree</field>
+            <field name="model">vip.member</field>
+            <field name="arch" type="xml">
+                <tree string="会员列表">
+                    <field name="member_id"/>
+                    <field name="card_status"/>
+                    <field name="total_money"/>
+                    <field name="points"/>
+                    <field name="m_name"/>
+                    <field name="m_level"/>
+                    <field name="m_sex"/>
+                    <field name="m_telephone"/>
+                    <field name="m_address"/>
+                    <field name="m_email"/>
+                    <field name="m_birthdate"/>
+                    <field name="m_identity_no"/>
+                    <field name="comment"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_member_form">
+            <field name="name">vip.member.form</field>
+            <field name="model">vip.member</field>
+            <field name="arch" type="xml">
+                <form string="会员表单" version="7.0">
+                    <header>
+                        <button name="member_money" string="充值" class="oe_highlight" type="object"/>
+                        <button name="member_loss" string="挂失" class="oe_highlight" type="object"/>
+                        <button name="member_active" string="激活" class="oe_highlight" type="object"/>
+                        <button name="member_off" string="注销" class="oe_highlight" type="object"/>
+                        <button name="member_pwd" string="修改密码" class="oe_highlight" type="object"/>
+                        <button name="member_sms_pwd" string="找回密码" class="oe_highlight" type="object"/>
+                        <button name="pro_exchange" string="兑换礼物" class="oe_highlight" type="action"/>
+                    </header>
+	                <sheet>
+	                	<group>
+			                <group>
+                                <field name="member_id"/>
+                                <field name="card_status"/>
+                                <field name="total_money"/>
+                                <field name="points"/>
+                                <field name="m_name"/>
+                                <field name="m_level"/>
+                                <field name="m_sex"/>
+                                <field name="m_telephone"/>
+                                <field name="m_address"/>
+                                <field name="m_email"/>
+                                <field name="m_birthdate"/>
+                                <field name="m_identity_no"/>
+                                <field name="comment"/>
+			                </group>
+	                	</group>
+             		</sheet>
+             	</form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_membership_smallpos_member">
+            <field name="name">会员列表</field>
+            <field name="res_model">vip.member</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_member_view_tree">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_member_tree"/>
+            <field name="act_window_id" ref="action_membership_smallpos_member"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_member_view_form">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_member_form"/>
+            <field name="act_window_id" ref="action_membership_smallpos_member"/>
+        </record>
+
+        <!-- 会员等级 -->
+        <record model="ir.ui.view" id="view_level_tree">
+            <field name="name">vip.level.tree</field>
+            <field name="model">vip.level</field>
+            <field name="arch" type="xml">
+                <tree string="会员等级">
+                    <field name="level_name"/>
+                    <field name="min_money"/>
+                    <field name="max_money"/>
+                    <field name="percent"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_level_form">
+            <field name="name">vip.level.form</field>
+            <field name="model">vip.level</field>
+            <field name="arch" type="xml">
+                <form string="等级表单" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="level_name"/>
+                                <field name="min_money"/>
+                                <field name="max_money"/>
+                                <field name="percent"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_membership_smallpos_level">
+            <field name="name">会员等级</field>
+            <field name="res_model">vip.level</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_level_view_tree">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_level_tree"/>
+            <field name="act_window_id" ref="action_membership_smallpos_level"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_level_view_form">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_level_form"/>
+            <field name="act_window_id" ref="action_membership_smallpos_level"/>
+        </record>
+
+        <!-- 礼物列表 -->
+        <record model="ir.ui.view" id="view_product_tree">
+            <field name="name">vip.product.tree</field>
+            <field name="model">vip.product</field>
+            <field name="arch" type="xml">
+                <tree string="礼物列表">
+                    <field name="product_id"/>
+                    <field name="product_name"/>
+                    <field name="product_point"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="product_status"/>
+                    <field name="comment"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_product_form">
+            <field name="name">vip.product.form</field>
+            <field name="model">vip.product</field>
+            <field name="arch" type="xml">
+                <form string="礼物表单" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="product_id"/>
+                                <field name="product_name"/>
+                                <field name="product_point"/>
+                                <field name="start_date"/>
+                                <field name="end_date"/>
+                                <field name="product_status"/>
+                                <field name="comment"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_membership_smallpos_product">
+            <field name="name">礼物列表</field>
+            <field name="res_model">vip.product</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_product_view_tree">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_product_tree"/>
+            <field name="act_window_id" ref="action_membership_smallpos_product"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_product_view_form">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_product_form"/>
+            <field name="act_window_id" ref="action_membership_smallpos_product"/>
+        </record>
+
+        <!-- 积分规则 -->
+        <record model="ir.ui.view" id="view_setpoints_tree">
+            <field name="name">vip.setpoints.tree</field>
+            <field name="model">vip.setpoints</field>
+            <field name="arch" type="xml">
+                <tree string="积分规则">
+                        <field name="rule_id"/>
+                        <field name="rule_money"/>
+                        <field name="rule_point"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_setpoints_form">
+            <field name="name">vip.setpoints.form</field>
+            <field name="model">vip.setpoints</field>
+            <field name="arch" type="xml">
+                <form string="规则表单" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="rule_id"/>
+                                <field name="rule_money"/>
+                                <field name="rule_point"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_membership_smallpos_setpoints">
+            <field name="name">积分规则</field>
+            <field name="res_model">vip.setpoints</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_setpoints_view_tree">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_setpoints_tree"/>
+            <field name="act_window_id" ref="action_membership_smallpos_setpoints"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_setpoints_view_form">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_setpoints_form"/>
+            <field name="act_window_id" ref="action_membership_smallpos_setpoints"/>
+        </record>
+
+        <!-- 短信账户 -->
+<!--         <record model="ir.ui.view" id="view_message_setting_tree">
+            <field name="name">message.setting.tree</field>
+            <field name="model">message.setting</field>
+            <field name="arch" type="xml">
+                <tree string="短信账户">
+                    <field name="account"/>
+                    <field name="password"/>
+                </tree>
+            </field>
+        </record> -->
+
+        <record model="ir.ui.view" id="view_message_setting_form">
+            <field name="name">message.setting.form</field>
+            <field name="model">message.setting</field>
+            <field name="view_mode">form</field>
+            <field name="arch" type="xml">
+                <form string="短信账户" create="false" delete="false" version="7.0">
+                    <header>
+                        <button name="check" string="验证" class="oe_highlight" type="object"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="account"/>
+                                <field name="password" password='True'/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_message_setting">
+            <field name="name">短信账户</field>
+            <field name="view_mode">form</field>
+            <field name="res_model">message.setting</field>
+        </record>
+<!-- 
+        <record model="ir.actions.act_window.view" id="action_message_setting_view_tree">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_message_setting_tree"/>
+            <field name="act_window_id" ref="action_message_setting"/>
+        </record>
+ -->
+        <record model="ir.actions.act_window.view" id="action_message_setting_view_form">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_message_setting_form"/>
+            <field name="act_window_id" ref="action_message_setting"/>
+        </record>
+
+        <!-- 短信模板 -->
+        <record model="ir.ui.view" id="view_message_template_tree">
+            <field name="name">message.template.tree</field>
+            <field name="model">message.template</field>
+            <field name="arch" type="xml">
+                <tree string="短信模板">
+                    <field name="name"/>
+                    <field name="sms1"/>
+                    <field name="sms2"/>
+                    <field name="sms3"/>
+                    <field name="sms4"/>
+                    <field name="sms5"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_message_template_form">
+            <field name="name">message.template.form</field>
+            <field name="model">message.template</field>
+            <field name="arch" type="xml">
+                <form string="短信模板" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="sms1"/>
+                                <field name="sms2"/>
+                                <field name="sms3"/>
+                                <field name="sms4"/>
+                                <field name="sms5"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_message_template">
+            <field name="name">短信模板</field>
+            <field name="res_model">message.template</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_message_template_view_tree">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_message_template_tree"/>
+            <field name="act_window_id" ref="action_message_template"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_message_template_view_form">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_message_template_form"/>
+            <field name="act_window_id" ref="action_message_template"/>
+        </record>
+
+        <!-- 充值记录 -->
+        <record model="ir.ui.view" id="view_charge_log_tree">
+            <field name="name">vip.charge.log.tree</field>
+            <field name="model">vip.charge.log</field>
+            <field name="arch" type="xml">
+                <tree string="充值记录" create="false">
+                    <field name="member_id"/>
+                    <field name="moneys"/>
+                    <field name="date"/>
+                    <field name="user_id"/>
+                    <field name="comment"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="action_charge_log">
+            <field name="name">充值记录</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">vip.charge.log</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" eval="False"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_charge_log_view_tree">
+            <field name="sequence" eval="4"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_charge_log_tree"/>
+            <field name="act_window_id" ref="action_charge_log"/>
+        </record>
+
+        <!-- 消费记录 -->
+        <record model="ir.ui.view" id="view_money_log_tree">
+            <field name="name">vip.money.log.tree</field>
+            <field name="model">vip.money.log</field>
+            <field name="arch" type="xml">
+                <tree string="消费记录" create="false">
+                    <field name="member_id"/>
+                    <field name="moneys"/>
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="user_id"/>
+                    <field name="comment"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="action_money_log">
+            <field name="name">消费记录</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">vip.money.log</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" eval="False"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_money_log_view_tree">
+            <field name="sequence" eval="4"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_charge_log_tree"/>
+            <field name="act_window_id" ref="action_money_log"/>
+        </record>
+
+        <!-- 积分记录 -->
+        <record model="ir.ui.view" id="view_points_log_tree">
+            <field name="name">vip.points.log.tree</field>
+            <field name="model">vip.points.log</field>
+            <field name="arch" type="xml">
+                <tree string="积分记录" create="false">
+                    <field name="member_id"/>
+                    <field name="points"/>
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="user_id"/>
+                    <field name="comment"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="action_points_log">
+            <field name="name">积分记录</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">vip.points.log</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" eval="False"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_points_log_view_tree">
+            <field name="sequence" eval="4"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_points_log_tree"/>
+            <field name="act_window_id" ref="action_points_log"/>
+        </record>
+		<menuitem name="VIP会员管理" id="base.menu_pos_membership" sequence="39"/>
+		<menuitem name="会员管理" id="menu_membership" sequence="0" parent="base.menu_pos_membership"/>
+		<menuitem name="会员列表" id="menu_membership_list" sequence="0" parent="menu_membership" action="action_membership_smallpos_member"/>
+		<menuitem name="会员等级" id="menu_membership_level" sequence="1" parent="menu_membership" action="action_membership_smallpos_level"/>
+		<menuitem name="积分管理" id="menu_membership_points" sequence="1" parent="base.menu_pos_membership"/>
+        <menuitem name="礼物列表" id="menu_membership_product" sequence="0" parent="menu_membership_points" action="action_membership_smallpos_product"/>
+        <menuitem name="积分规则" id="menu_membership_setpoints" sequence="1" parent="menu_membership_points" action="action_membership_smallpos_setpoints"/>
+		<menuitem name="统计报表" id="menu_membership_reports" sequence="3" parent="base.menu_pos_membership"/>
+        <menuitem name="充值记录" id="menu_membership_charge_log" sequence="3" parent="menu_membership_reports" action="action_charge_log"/>
+        <menuitem name="消费记录" id="menu_membership_money_log" sequence="3" parent="menu_membership_reports" action="action_money_log"/>
+        <menuitem name="积分记录" id="menu_membership_points_log" sequence="3" parent="menu_membership_reports" action="action_points_log"/>
+		<menuitem name="短信管理" id="menu_membership_sms" sequence="4" parent="base.menu_pos_membership"/>
+        <menuitem name="短信账户" id="menu_membership_sms_account" sequence="0" parent="menu_membership_sms" action="action_message_setting"/>
+        <menuitem name="账户模板" id="menu_membership_sms_template" sequence="0" parent="menu_membership_sms" action="action_message_template"/>
+
+
+         <!-- test -->
+        <record model="ir.ui.view" id="view_test_tree">
+            <field name="name">vip.test.tree</field>
+            <field name="model">vip.money</field>
+            <field name="arch" type="xml">
+                <tree string="test">
+                    <field name="member_id"/>
+                    <field name="total_money"/>
+                    <field name="comment"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_test_form">
+            <field name="name">vip.test.form</field>
+            <field name="model">vip.money</field>
+            <field name="arch" type="xml">
+                <form string="会员表单" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="member_id"/>
+                                <field name="total_money"/>
+                                <field name="comment"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_membership_smallpos_money">
+            <field name="name">会员列表</field>
+            <field name="res_model">vip.money</field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_test_view_tree">
+            <field name="sequence" eval="2"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_test_tree"/>
+            <field name="act_window_id" ref="action_membership_smallpos_money"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_membership_smallpos_test_view_form">
+            <field name="sequence" eval="3"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_test_form"/>
+            <field name="act_window_id" ref="action_membership_smallpos_money"/>
+        </record>
+
+        <menuitem name="test删除" id="menu_membership_test" sequence="4" parent="base.menu_pos_membership"/>
+        <menuitem name="test" id="menu_membership_test1" sequence="0" parent="menu_membership_test" action="action_membership_smallpos_money"/>
+        <!-- test -->
+    </data>
+</openerp>
