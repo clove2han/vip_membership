@@ -9,7 +9,7 @@ class member_active(osv.osv_memory):
         'comment': fields.char('',size=64, readonly=True),
     }
     _defaults ={
-        'comment': '确定为该会员激活？',
+        'comment': u'确定为该会员激活？',
     }
 
     def run(self, cr, uid, ids, context=None):
@@ -24,7 +24,7 @@ class member_active(osv.osv_memory):
                 'm_off': False,
             }
             self.pool.get('vip.member').write(cr, uid, active_ids, new_status)
-
+            self.pool.get('message.template').send_sms_temp(cr,uid,active_ids,u'会员激活发送短信')
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',

@@ -1,0 +1,23 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vip_setpoint_manager,vip.setpoint manager,model_vip_setpoints,group_vip_membership_manager,1,1,1,1
+access_vip_setpoint,vip.setpoint,model_vip_setpoints,group_vip_membership_user,1,0,0,0
+access_vip_product_manager,vip.product manager,model_vip_product,group_vip_membership_manager,1,1,1,1
+access_vip_product,vip.product,model_vip_product,group_vip_membership_user,1,0,0,0
+access_vip_points_log_manager,vip.points.log manager,model_vip_points_log,group_vip_membership_manager,1,1,1,1
+access_vip_points_log,vip.points.log,model_vip_points_log,group_vip_membership_user,1,1,1,0
+access_vip_money_log_manager,vip.money.log manager,model_vip_money_log,group_vip_membership_manager,1,1,1,1
+access_vip_money_log,vip.money.log,model_vip_money_log,group_vip_membership_user,1,1,1,0
+access_vip_messagesetting_manager,vip.messagesetting manager,model_message_setting,group_vip_membership_manager,1,1,1,1
+access_vip_messagesetting,vip.messagesetting,model_message_setting,group_vip_membership_user,1,0,0,0
+access_vip_messages_manager,vip.messages manager,model_message_template,group_vip_membership_manager,1,1,1,1
+access_vip_messages,vip.messages,model_message_template,group_vip_membership_user,1,0,0,0
+access_vip_member_point_manager,vip.member.point manager,model_vip_points,group_vip_membership_manager,1,1,1,1
+access_vip_member_point,vip.member.point,model_vip_points,group_vip_membership_user,1,1,1,0
+access_vip_member_money_manager,vip.member.money manager,model_vip_money,group_vip_membership_manager,1,1,1,1
+access_vip_member_money,vip.member.money,model_vip_money,group_vip_membership_user,1,1,1,0
+access_vip_member_manager,vip.member manager,model_vip_member,group_vip_membership_manager,1,1,1,1
+access_vip_member_level_manager,vip.member.level manager,model_vip_level,group_vip_membership_manager,1,1,1,1
+access_vip_member_level,vip.member.level,model_vip_level,group_vip_membership_user,1,0,0,0
+access_vip_member,vip.member,model_vip_member,group_vip_membership_user,1,1,1,0
+access_vip_charge_log_manager,vip.charge.log manager,model_vip_charge_log,group_vip_membership_manager,1,1,1,1
+access_vip_charge_log,vip.charge.log,model_vip_charge_log,group_vip_membership_user,1,1,1,0

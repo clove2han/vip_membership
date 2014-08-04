@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <report
+            id="vip_member_details"
+            string="会员信息详情"
+            model="vip.member"
+            name="vip.member.details"
+            auto="False"
+            multi="True"
+            menu="False"
+            rml="vip_membership/report/vip_member_details.rml"
+             />
+             
+        <report
+            id="vip_member_details"
+            string="会员充值详情"
+            model="vip.charge.log"
+            name="vip.charge.details"
+            auto="False"
+            multi="True"
+            menu="False"
+            rml="vip_membership/report/vip_charge_details.rml"
+             />
+             
+        <report
+            id="vip_pay_details"
+            string="会员消费详情"
+            model="vip.money.log"
+            name="vip.pay.details"
+            auto="False"
+            multi="True"
+            menu="False"
+            rml="vip_membership/report/vip_pay_details.rml"
+             />
+             
+        <report
+            id="vip_points_details"
+            string="会员积分详情"
+            model="vip.points.log"
+            name="vip.points.details"
+            auto="False"
+            multi="True"
+            menu="False"
+            rml="vip_membership/report/vip_points_details.rml"
+             />
+    </data>
+</openerp>

@@ -1,122 +1,186 @@
 # -*- coding: utf-8 -*-
-import time
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
+from random import sample
+from string import ascii_letters, digits
+import time
 import openerp
 import urllib2
-#定义会员状态
-CARD_STATUS= [
-    (1, '挂失'),
-    (2, '正常'),
-    (3, '注销'),
-]
+from AES import AESModeOfOperation,encryptData,decryptData
+
+mode = AESModeOfOperation.modeOfOperation["CFB"]
+key='\xde\x99\xbd\xc14_\xe3!\xfe\xd1\xa2\xb6\x01&\xf6F\xf2\x7f\x17\t\xd9\xa3\xadt'
 
 #定义会员性别
 SEX_STATUS= [
-    (1, '男'),
-    (2, '女'),
-]
-
-#手机状态
-PHONE_STATUS = [
-    (1, '未验证'),
-    (2, '已验证'),
+    (1, u'男'),
+    (2, u'女'),
 ]
 
 #兑换商品状态
 ACTIVE2_TYPE=[
-    (1,'激活状态'),
-    (2,'失效状态')
+    (1,u'激活状态'),
+    (2,u'失效状态')
 ]
+
+def gen_salt(length=6, symbols=None):
+    if symbols is None:
+        symbols = ascii_letters + digits
+    return ''.join(sample(symbols, length))
 
 #预付款表
 class vip_money(osv.osv):
     _name='vip.money'
 
     _columns = {
-        'member_id': fields.many2one('vip.member',string='会员卡号', select=True, ondelete='cascade', required=True),
-        'total_money': fields.float('充值金额',digits=(16,2), required=True),
-        'comment': fields.char('备注',size=128),
+        'member_id': fields.many2one('vip.member',string=u'会员卡号', select=True, ondelete='cascade', required=True),
+        'total_money': fields.float(u'余额',digits=(16,2), required=True),
+        'comment': fields.char(u'备注',size=128),
     }
     
     _defaults = {
         'total_money': 0,
     }
 
-#     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-#         if not context: context = {}
-#         active_model = context.get('active_model', False) or False
-#         active_ids = context.get('active_ids', []) or []
-#         records = []
-#         if active_model and active_ids:
-#             records = self.pool.get(active_model).browse(cr, uid, active_ids, context=context)
-#         if len(records)>1:
-#             raise osv.except_osv( '警告!','请选择一个会员进行查询！')
-#         
-#         res = super(vip_money, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
-# 
-#         if records:
-# #             records = records[0]
-# #             print records.m_name
-# #             this_records = self.pool.get(self._name).browse(cr, uid, [('name','=','123456')])
-#             pass
-#         else:
-#             res['arch'] = u'''<form string="添加会员卡" version="7.0">
-#                         <sheet>
-#                             <group>
-#                                 <group>
-#                                     <field name="name"/>
-#                                     <field name="card_status"/>
-#                                     <field name="comment"/>
-#                                 </group>
-#                                 <group>
-#                                     <button name="readforboard" class="oe_highlight" type="object"><label string="读取卡号"/></button>
-#                                     <label string="*请将会员卡放入感应区！"/>
-#                                     <field name="m_password"/>
-#                                     <field name="m_password1"/>
-#                                 </group>
-#                             </group>
-#                          </sheet>
-#                      </form>'''
-#         return res
-    
-#     def default_get(self, cr, uid, fields, context=None):
-#         if context is None:
-#             context = {}
-#         res = super(vip_money, self).default_get(cr, uid, fields, context=context)
-#         ids = self.pool.get(self._name).search(cr, uid, [('name','=','123456')])
-#         this_records = self.pool.get(self._name).read(cr, uid, ids)
-#         print '========this===============',this_records
-#         res.update(this_records[0])
-#         return res
-#     
-#     def readforboard(self, cr, uid, ids, context=None):
-#         self.pool.get('vip.money').unlink(cr, uid, ids)
-#         raise osv.except_osv(u'警告!',u'亲，暂时未开放此功能！')
+    def oper_money(self,cr,uid,type,member_id,money,name='',comment='',context=None):
+        '''
+        type:正常充值，赠送金额，消费
+        member_id:会员卡号
+        money:变动金额
+        name:销售点名称，消费时需要传入
+        comment:备注信息
+        '''
+        res = {'flag':False,
+               'info':''
+        }
+        mem_obj = self.pool.get('vip.member').search_read(cr, uid, [('member_id','=',member_id)], context=context)
+        if mem_obj and len(mem_obj)==1:
+            mem_ids = mem_obj[0]['id']
+            money_obj = self.search_read(cr, uid, [('member_id','=',mem_ids)], context=context)
+            old_money = money_obj[0]['total_money']
+            ids = [money_obj[0]['id']]
+            # 充值
+            if type in [u'正常充值',u'赠送金额']:
+                new_money = old_money + money
+                self.write(cr, uid, ids, {'total_money': new_money,})
+                # 充值记录
+                new_records = {
+                    'member_id': mem_ids,
+                    'moneys': money,
+                    'user_id': uid,
+                    'type': type,
+                    'comment': comment,
+                }
+                self.pool.get('vip.charge.log').create(cr, uid, new_records)
+                res['flag'] = True
+            # 消费
+            elif type == u'消费':
+                new_money = old_money - money
+                if new_money >= 0:
+                    self.write(cr, uid, ids, {'total_money': new_money,})
+                
+                    #消费记录
+                    new_records = {
+                        'member_id': mem_ids,
+                        'moneys': money,
+                        'user_id': uid,
+                        'name': name,
+                        'comment': comment,
+                    }
+                    self.pool.get('vip.money.log').create(cr, uid, new_records)
+                    res['flag'] = True
+                else:
+                    res['info'] = u'你的余额不够，请选择其他支付方式！'
+        else:
+            res['info'] = u'预付款中不存在会员信息！'
+            
+        return res
+        
 
 #积分表
 class vip_points(osv.osv):
     _name='vip.points'
 
     _columns = {
-        'member_id': fields.many2one('vip.member',string='会员卡号', select=True, ondelete='cascade', required=True),
-        'points': fields.integer('消费积分', required=True),
-        'comment': fields.char('备注',size=128),
+        'member_id': fields.many2one('vip.member',string=u'会员卡号', select=True, ondelete='cascade', required=True),
+        'points': fields.integer(u'积分', required=True),
+        'comment': fields.char(u'备注',size=128),
     }
     
     _defaults = {
         'points': 0,
     }
 
+    def oper_points(self,cr,uid,type,member_id,points,name=None,comment='',context=None):
+        '''
+        type:消费增加积分，消费积分，兑换礼物
+        member_id:会员卡号
+        points:变动积分
+        name:销售点名称，消费时需要传入
+        comment:备注信息
+        '''
+        res = {'flag':False,
+               'info':''
+        }
+        mem_obj = self.pool.get('vip.member').search_read(cr, uid, [('member_id','=',member_id)], context=context)
+        if mem_obj and len(mem_obj)==1:
+            mem_ids = mem_obj[0]['id']
+            points_obj = self.search_read(cr, uid, [('member_id','=',mem_ids)], context=context)
+            old_points = points_obj[0]['points']
+            ids = [points_obj[0]['id']]
+            # 增加积分
+            if type == u'消费增加积分':
+                new_points = old_points + points
+                self.write(cr, uid, ids, {'points': new_points,})
+                
+                # 积分记录
+                new_records = {
+                    'member_id': mem_ids,
+                    'points': points,
+                    'user_id': uid,
+                    'type': type,
+                    'comment': comment,
+                }
+                if name:
+                    new_records['name'] = name
+                self.pool.get('vip.points.log').create(cr, uid, new_records)
+                res['flag'] = True
+            # 减少积分
+            elif type in[u'消费积分', u'兑换礼物']:
+                new_points = old_points - points
+                if new_points >= 0:
+                    self.write(cr, uid, ids, {'points': new_points,})
+                
+                    #积分记录
+                    new_records = {
+                        'member_id': mem_ids,
+                        'points': -points,
+                        'user_id': uid,
+                        'type': type,
+                        'comment': comment,
+                    }
+                    if name:
+                        new_records['name'] = name
+                    self.pool.get('vip.points.log').create(cr, uid, new_records)
+                    res['flag'] = True
+                else:
+                    res['info'] = u'你的积分不够，无法进行此操作'
+        else:
+            res['info'] = u'积分表中不存在会员信息！'
+            
+        return res
 #会员表
 class vip_member(osv.osv):
-    '''pos member'''
+    '''vip member'''
     _name = 'vip.member'
     
     def create(self, cr, uid, vals, context=None):
         ids = super(vip_member, self).create(cr, uid, vals, context=context)
+        self.set_password(cr, uid, ids,'')
         self.pool['vip.money'].create(cr, uid, {'member_id':ids})
         self.pool['vip.points'].create(cr, uid, {'member_id':ids})
+        #创建用户发送短信
+        self.pool.get('message.template').send_sms_temp(cr,uid,[ids],u'会员注册成功短信')
         return ids
     
     def _get_member_id(self, cr, uid, ids, field_names, arg, context=None):
@@ -138,10 +202,9 @@ class vip_member(osv.osv):
         result = {}
         part_obj = self.pool.get('vip.money')
         for charge in self.browse(cr, uid, ids, context=context):
-            result[charge.id] = 0.00
-            
-            if charge.member_id:
-                money_obj = part_obj.search(cr, uid, [('member_id','=',ids[0])], context=context)
+            if charge.id:
+                result[charge.id] = 0.00
+                money_obj = part_obj.search(cr, uid, [('member_id','=',charge.id)], context=context)
                 money_data = part_obj.read(cr, uid, money_obj, context=context)
                 if money_data:
                     money_dict = money_data[0]
@@ -152,10 +215,9 @@ class vip_member(osv.osv):
         result = {}
         part_obj = self.pool.get('vip.points')
         for charge in self.browse(cr, uid, ids, context=context):
-            result[charge.id] = 0
-
-            if charge.member_id:
-                money_obj = part_obj.search(cr, uid, [('member_id','=',ids[0])], context=context)
+            if charge.id:
+                result[charge.id] = 0
+                money_obj = part_obj.search(cr, uid, [('member_id','=',charge.id)], context=context)
                 money_data = part_obj.read(cr, uid, money_obj, context=context)
                 if money_data:
                     money_dict = money_data[0]
@@ -167,38 +229,37 @@ class vip_member(osv.osv):
         for charge in self.browse(cr, uid, ids, context=context):
             result[charge.id] = 0
             if charge.m_normal:
-                result[charge.id] = '正常'
+                result[charge.id] = u'正常'
             elif charge.m_loss:
-                result[charge.id] = '挂失'
+                result[charge.id] = u'挂失'
             elif charge.m_off:
-                result[charge.id] = '注销'
+                result[charge.id] = u'注销'
             else:
-                raise osv.except_osv( _('错误!'),_('查询会员状态异常，请联系管理员'))
+                raise osv.except_osv( _(u'错误!'),_(u'查询会员状态异常，请联系管理员'))
         return result
 
     _columns = {
-        'member_id': fields.char('会员卡号', size=32, select=True, required=True),
-        'card_status': fields.function(_get_card_status,type='char', string='会员卡状态'),
-        'm_password': fields.char('支付密码',size=12),
-        'm_normal': fields.boolean('激活状态', required=True),
-        'm_loss': fields.boolean('挂失状态', required=True),
-        'm_off': fields.boolean('注销状态', required=True),
-        'm_level': fields.many2one('vip.level',string='会员等级', required=True),
-        'm_name': fields.char('姓名', size=24, select=1),
-        'm_sex': fields.selection(SEX_STATUS, '性别'),
-        'm_telephone': fields.char('手机号码', size=12, select=1),
-        'm_address': fields.char('联系地址', size=128),
-        'm_email': fields.char('电子邮件', size=32),
-        'm_birthdate': fields.date('生日'),
-        'm_identity_no': fields.char('身份证', size=24),
-        'comment': fields.char('备注',size=128),
+        'member_id': fields.char(u'会员卡号', size=32, select=True, required=True),
+        'card_status': fields.function(_get_card_status,type='char', string=u'会员卡状态'),
+        'm_password': fields.char(u'支付密码',size=64),
+        'm_normal': fields.boolean(u'激活状态', required=True),
+        'm_loss': fields.boolean(u'挂失状态', required=True),
+        'm_off': fields.boolean(u'注销状态', required=True),
+        'm_level': fields.many2one('vip.level',string=u'会员等级', required=True),
+        'm_name': fields.char(u'姓名', size=24, select=1),
+        'm_sex': fields.selection(SEX_STATUS, u'性别'),
+        'm_telephone': fields.char(u'手机号码', size=12, select=1),
+        'm_address': fields.char(u'联系地址', size=128),
+        'm_email': fields.char(u'电子邮件', size=32),
+        'm_birthdate': fields.date(u'生日'),
+        'm_identity_no': fields.char(u'身份证', size=24),
+        'comment': fields.char(u'备注',size=128),
         #'name': fields.function(_get_member_id,type='char', size=32, string='会员卡号',multi='name'),
-        'total_money': fields.function(_get_total_money,type='float', string='充值金额'),
-        'points': fields.function(_get_points,type='integer', string='消费积分'),
+        'total_money': fields.function(_get_total_money,type='float', string=u'充值金额'),
+        'points': fields.function(_get_points,type='integer', string=u'消费积分'),
     }
     _defaults = {
         'm_name': '',
-        'm_password':'',
         'm_sex': 1,
         'm_level': 1,
         'm_normal': True,
@@ -209,12 +270,7 @@ class vip_member(osv.osv):
     _sql_constraints = [
         ('name_uniq', 'unique(member_id)',u'会员卡号已存在！'),
     ]
-    def fields_view_get(self, cr, user, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """ To call the init() method timely
-        """
-        res = super(vip_member, self).fields_view_get(cr, user, view_id, view_type, context, toolbar=toolbar, submenu=submenu)
-        return res
-    
+
     def name_get(self, cr, uid, ids, context=None):
         res = []
         for inst in self.browse(cr, uid, ids, context=context):
@@ -234,6 +290,28 @@ class vip_member(osv.osv):
             ids = self.search(cr, user, [('member_id',operator,name)] + args, limit=limit, context=context)
         return self.name_get(cr, user, ids, context)
     
+    def set_password(self, cr, uid, ids, passwd, context=None):
+        new_passwd = encryptData(key, passwd, mode)
+        self.write(cr, uid, ids, {'m_password': new_passwd})
+
+    def get_password(self, cr, uid, ids, context=None):
+        m_password = ''
+        records = self.browse(cr, uid, ids, context)
+        if records and len(records) == 1:
+            mem_obj = records[0]
+            m_password = decryptData(key,mem_obj.m_password,mode) or ''
+        return m_password
+        
+    def check(self, cr, uid, ids, old_passwd, context=None):
+        records = self.browse(cr, uid, ids, context)
+        if records and len(records) == 1:
+            mem_obj = records[0]
+            m_password = decryptData(key,mem_obj.m_password,mode) or ''
+            print '==db==',repr(m_password),'===input===',repr(old_passwd)
+            if  m_password == old_passwd:
+                return True
+        return False
+    
     def change_password(self, cr, uid, ids, old_passwd, new_passwd, context=None):
         """Change current user password. Old password must be provided explicitly
         to prevent hijacking an existing user session, or for cases where the cleartext
@@ -243,15 +321,28 @@ class vip_member(osv.osv):
         :raise: openerp.exceptions.AccessDenied when old password is wrong
         :raise: except_osv when new password is not set or empty
         """
-#         self.check(cr.dbname, uid, old_passwd)
-#         if new_passwd:
-#             return self.write(cr, uid, ids, {'m_password': new_passwd})
-        raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
+        res = {'flag':False,
+               'info':''}
+        records = self.browse(cr, uid, ids, context=context)
+        if records and len(records) == 1:
+            mem_obj = records[0]
+        if not mem_obj:
+            res['info'] = u'获取会员信息失败！'
+        if not mem_obj.m_normal:
+            res['info'] = u'会员状态不可用！'
+        else:
+            if self.check(cr, uid, ids,old_passwd):
+                self.set_password(cr, uid, ids,new_passwd)
+                res['flag'] = True
+            else:
+                res['info'] = u'原密码输入错误！'
+        
+        return res
     
     #充值
     def member_money(self, cr, uid, ids, context=None):
         return {
-            'name': "充值",
+            'name': u"充值",
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'member.charge',
@@ -265,7 +356,7 @@ class vip_member(osv.osv):
     #挂失
     def member_loss(self, cr, uid, ids, context=None):
         return {
-            'name': "挂失",
+            'name': u"挂失",
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'member.loss',
@@ -279,7 +370,7 @@ class vip_member(osv.osv):
     #激活
     def member_active(self, cr, uid, ids, context=None):
         return {
-            'name': "激活",
+            'name': u"激活",
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'member.active',
@@ -293,7 +384,7 @@ class vip_member(osv.osv):
     #修改密码
     def member_pwd(self, cr, uid, ids, context=None):
         return {
-            'name': "修改密码",
+            'name': u"修改密码",
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'member.pwd',
@@ -306,24 +397,19 @@ class vip_member(osv.osv):
     
     #找回密码
     def member_sms_pwd(self, cr, uid, ids, context=None):
-        self.pool.get('message.setting').send_sms(cr, uid, 'this is ', '18025447851')
-
-        return {
-            'name': "找回密码",
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'member.pwd',
-            'view_id': False,
-            'target': 'new',
-            'views': False,
-            'type': 'ir.actions.act_window',
-            'context': context,
-        }
+        status = self.pool.get('message.template').send_sms_temp(cr,uid,ids,u'会员发送密码短信')
+        if status["flag"]:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
+        else:
+            raise osv.except_osv(u'发送失败!',status['info'])
 
     #注销
     def member_off(self, cr, uid, ids, context=None):
         return {
-            'name': "注销",
+            'name': u"注销",
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'member.off',
@@ -337,7 +423,7 @@ class vip_member(osv.osv):
     #兑换商品
     def pro_exchange(self, cr, uid, ids, context=None):
         return {
-            'name': "度环商品",
+            'name': u"兑换礼物",
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'pro.exchange',
@@ -354,12 +440,12 @@ class vip_money_log(osv.osv):
     _order = 'date desc'
 
     _columns = {
-        'member_id': fields.many2one('vip.member',string='会员卡号', select=True, ondelete='cascade', required=True),
-        'moneys': fields.float('消费金额', digits=(16,2), required=True),
-        'name': fields.many2one('pos.config','销售点名称', required=True),
-        'date':  fields.datetime('日期', readonly=True, select=True),
-        'user_id': fields.many2one('res.users', '操作员', required=True),
-        'comment': fields.char('备注',size=36),
+        'member_id': fields.many2one('vip.member',string=u'会员卡号', select=True, ondelete='cascade', required=True),
+        'moneys': fields.float(u'消费金额', digits=(16,2), required=True),
+        'name': fields.many2one('pos.config',u'销售点名称', required=True),
+        'date':  fields.datetime(u'日期', readonly=True, select=True),
+        'user_id': fields.many2one('res.users', u'操作员', required=True),
+        'comment': fields.char(u'备注',size=36),
         #'company_id':fields.many2one('res.company', 'Company', required=True, readonly=True),
     }
     
@@ -368,19 +454,27 @@ class vip_money_log(osv.osv):
         'user_id': lambda self, cr, uid, context: uid,
         #'company_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
     }
-
+    
+    def name_get(self, cr, uid, ids, context=None):
+        res = []
+        for inst in self.browse(cr, uid, ids, context=context):
+            name = inst.member_id.member_id or ''
+            res.append((inst.id, name))
+        return res
+    
 #积分记录表
 class vip_points_log(osv.osv):
     _name='vip.points.log'
     _order = 'date desc'
 
     _columns = {
-        'member_id': fields.many2one('vip.member',string='会员卡号', select=True, ondelete='cascade', required=True),
-        'points': fields.integer('消费积分', required=True),
-        'name': fields.many2one('pos.config','销售点名称', required=True),
-        'date':  fields.datetime('日期', readonly=True, select=True, required=True),
-        'user_id': fields.many2one('res.users', '操作员', required=True),
-        'comment': fields.char('备注',size=36),
+        'member_id': fields.many2one('vip.member',string=u'会员卡号', select=True, ondelete='cascade', required=True),
+        'points': fields.integer(u'消费积分', required=True),
+        'name': fields.many2one('pos.config',u'销售点名称'),
+        'date':  fields.datetime(u'日期', readonly=True, select=True, required=True),
+        'type': fields.char(u'类型',size=12),
+        'user_id': fields.many2one('res.users', u'操作员', required=True),
+        'comment': fields.char(u'备注',size=36),
         #'company_id':fields.many2one('res.company', 'Company', required=True, readonly=True),
     }
     
@@ -389,6 +483,13 @@ class vip_points_log(osv.osv):
         'user_id': lambda self, cr, uid, context: uid,
         #'company_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
     }
+
+    def name_get(self, cr, uid, ids, context=None):
+        res = []
+        for inst in self.browse(cr, uid, ids, context=context):
+            name = inst.member_id.member_id or ''
+            res.append((inst.id, name))
+        return res
 
 #充值记录表
 class vip_charge_log(osv.osv):
@@ -396,11 +497,12 @@ class vip_charge_log(osv.osv):
     _order = 'date desc'
 
     _columns = {
-        'member_id': fields.many2one('vip.member',string='会员卡号', select=True, ondelete='cascade', required=True),
-        'moneys': fields.float('充值金额',digits=(16,2), required=True),
-        'date':  fields.datetime('日期', readonly=True, select=True),
-        'user_id': fields.many2one('res.users', '操作员', required=True),
-        'comment': fields.char('备注',size=36),
+        'member_id': fields.many2one('vip.member',string=u'会员卡号', select=True, ondelete='cascade', required=True),
+        'moneys': fields.float(u'充值金额',digits=(16,2), required=True),
+        'type': fields.char(u'类型',size=12, required=True),
+        'date':  fields.datetime(u'日期', readonly=True, select=True),
+        'user_id': fields.many2one('res.users', u'操作员', required=True),
+        'comment': fields.char(u'备注',size=36),
         #'company_id':fields.many2one('res.company', 'Company', required=True, readonly=True),
     }
     
@@ -410,57 +512,76 @@ class vip_charge_log(osv.osv):
         #'company_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
     }
 
+    def name_get(self, cr, uid, ids, context=None):
+        res = []
+        for inst in self.browse(cr, uid, ids, context=context):
+            name = inst.member_id.member_id or ''
+            res.append((inst.id, name))
+        return res
+
 #积分规则表
 class vip_setpoints(osv.osv):
     _name='vip.setpoints'
 
     _columns = {
-        'rule_id': fields.integer('积分规则ID', required=True,help='积分规则ID'),
-        'rule_money': fields.float('消费金额(元)', required=True, digits=(16,2),help='每次订单消费多少金额'),
-        'rule_point': fields.integer('返回积分', required=True, help='返回积分'),
+        'rule_money': fields.float(u'消费金额(元)', required=True, digits=(16,2),help=u'每次订单消费多少金额'),
+        'rule_point': fields.integer(u'返回积分', required=True, help=u'返回积分'),
+        'rule_active': fields.boolean(u'激活状态', required=True,help=u'当处于激活状态时，会员消费可为会员积分'),
     }
     
     _defaults = {
         'rule_money': 1,
         'rule_point': 1,
     }
-
+    def name_get(self, cr, uid, ids, context=None):
+        res = []
+        for inst in self.browse(cr, uid, ids, context=context):
+            name = u'积分规则'
+            res.append((inst.id, name))
+        return res
 #商品兑换表
 class vip_product(osv.osv):
     _name='vip.product'
     _order = 'product_name'
 
     _columns = {
-        'product_id': fields.integer('商品ID',required=True),
-        'product_name': fields.char('商品名称', size=12),
-        'product_point': fields.integer('所需积分',required=True),
+        'product_id': fields.integer(u'商品ID',required=True),
+        'product_name': fields.char(u'商品名称', size=12),
+        'product_point': fields.integer(u'所需积分',required=True),
         # 'qty_available': fields.integer('商品数量',required=True),
-        'start_date':  fields.date('开始日期',required=True),
-        'end_date':  fields.date('结束日期',required=True),
-        'product_status': fields.selection(ACTIVE2_TYPE, '状态',required=True),
-        'comment': fields.char('备注',size=128),
+        'start_date':  fields.date(u'开始日期',required=True),
+        'end_date':  fields.date(u'结束日期',required=True),
+        'product_status': fields.selection(ACTIVE2_TYPE, u'状态',required=True),
+        'comment': fields.char(u'备注',size=128),
     }
     
     _defaults = {
         'product_point': 0,
         'product_status': 1
     }
+    
+    def name_get(self, cr, uid, ids, context=None):
+        res = []
+        for inst in self.browse(cr, uid, ids, context=context):
+            name = inst.product_name or ''
+            res.append((inst.id, name))
+        return res
 
 #会员等级表
 class vip_level(osv.osv):
     _name = 'vip.level'
     
     _columns = {
-        'level_name': fields.char('等级名称', size=10, required=True, help='设置会员等级的名称'),
-        'min_money': fields.float('最小金额', digits=(16,2),required=True, help='最小金额上限'),
-        'max_money': fields.float('最大金额', digits=(16,2),required=True, help='最大金额上限'),
-        'percent': fields.float('享受折扣',digits=(16,2),required=True,help='该会员等级享受的折扣，填写0.88表示为打8.8折'),
+        'level_name': fields.char(u'等级名称', size=10, required=True, help=u'设置会员等级的名称'),
+        'min_money': fields.float(u'最小金额', digits=(16,2),required=True, help=u'最小金额上限'),
+        'max_money': fields.float(u'最大金额', digits=(16,2),required=True, help=u'最大金额上限'),
+        'percent': fields.float(u'享受折扣',digits=(16,2),required=True,help=u'该会员等级享受的折扣，填写0.88表示为打8.8折'),
     }
     
     _sql_constraints = [
         ('percent_low_than_1', 'CHECK (percent<=1.00)', u'折扣值不能大于1!'),
         ('percent_uniq', 'unique(percent)',u'享受折扣不能和其他重复！'),
-        ('percent_uniq', 'CHECK(min_money<=max_money)',u'最大金额必须大于等于最小金额！'),
+        ('percent_min_low_max', 'CHECK(min_money<=max_money)',u'最大金额必须大于等于最小金额！'),
     ]
     def get_max_money(self, cr, uid, context={}):
         res = 0.00
@@ -499,14 +620,14 @@ class message_setting(osv.osv):
     _name = 'message.setting'
 
     _columns = {
-        'account': fields.char('用户名', size=18, required=True, help='发送短信需申请的账户信息'),
-        'password': fields.char('密码', size=18,required=True, help='您申请的发送短信的账号的密码'),
+        'account': fields.char(u'用户名', size=18, required=True, help=u'发送短信需申请的账户信息'),
+        'password': fields.char(u'密码', size=18,required=True, help=u'您申请的发送短信的账号的密码'),
     }
     
     def name_get(self, cr, uid, ids, context=None):
         res = []
         for inst in self.browse(cr, uid, ids, context=context):
-            name = '账户信息'
+            name = u'账户信息'
             res.append((inst.id, name))
         return res
 
@@ -517,34 +638,133 @@ class message_setting(osv.osv):
         return res
     
     def send_sms(self, cr, uid, msginfo, mobile, context=None):
-        res = {}
+        res = {'flag':False,
+               'info':''}
         account = ''
         password = ''
         msg = ''
+        ipadds = 'http://121.199.16.178'
+        url = 'http://106.ihuyi.com'
         message=self.read(cr,uid,[1],['account','password'])
         if message:
             account=message[0]['account']
             password=message[0]['password']
         if  msginfo and mobile and account:
             try:
-                sms_res=urllib2.urlopen('http://106.ihuyi.com/webservice/sms.php?method=Submit&account='+account+'&password='+password+'&mobile='+mobile+'&content='+msginfo).read()
+                send_url = ipadds + '/webservice/sms.php?method=Submit&account='+account+'&password='+password+'&mobile='+mobile+'&content='+msginfo
+                sms_res=urllib2.urlopen(send_url.encode('utf-8')).read()
             except:
-                raise osv.except_osv( _('发送短信失败!'),_('无连接到短信发送服务器！'))
-            
-            code=res[sms_res.index("<code>")+6:sms_res.index("</code>")]
-            msg=res[sms_res.index("<msg>")+5:sms_res.index("</msg>")]
+                res['info'] = u'无连接到短信发送服务器!'
+                return res
+
+            code=sms_res[sms_res.index("<code>")+6:sms_res.index("</code>")]
+            msg=sms_res[sms_res.index("<msg>")+5:sms_res.index("</msg>")]
             if code!='2':
-                raise osv.except_osv( _('发送短信失败!'),_(msg))
+                res['info'] =  msg.decode("utf-8")
+            else:
+                res['flag'] =True
+        else:
+            res['info'] = u'发送短信错误，会员无手机号或短信账户不正确'
+        return res
 
 
 class message_template(osv.osv):
     _name='message.template'
 
     _columns = {
-        'name': fields.char('短信类型',size=18, required=True, readonly=True),
-        'sms1': fields.char('短信组成一',size=64),
-        'sms2': fields.char('短信组成二',size=64),
-        'sms3': fields.char('短信组成三',size=64),
-        'sms4': fields.char('短信组成四',size=64),
-        'sms5': fields.char('短信组成五',size=64),
+        'name': fields.char(u'模板名称',size=18, required=True, readonly=True),
+        'details': fields.text(u'模板内容',required=True),
+        'content': fields.char(u'备注',size=64),
+        'active': fields.boolean(u'发送短信'),
     }
+    
+    def get_info(self,cr,uid,ids,context=None):
+        res = {
+            'flag':False,
+            'info':'',
+            'CardID': '',
+            'Name': '',
+            'AddMoney': '',
+            'CurMoney': '',
+            'CutMoney': '',
+            'Level': '',
+            'SecCode': gen_salt(symbols=digits),
+            'Time': time.strftime("%Y-%m-%d %H:%M:%S"),
+            'AddPoint': '',
+            'CurPoint': '',
+            'CutPoint': '',
+            'Discount': '',
+            'Mobile':'',
+            'MemPWD':'',
+        }
+        records = self.pool.get('vip.member').browse(cr, uid, ids, context=context)
+        if records and len(records) == 1:
+            mem_obj = records[0]
+        if not mem_obj:
+            res['info'] = u'获取会员信息失败！'
+            return res
+
+        res['CardID'] = mem_obj.member_id or ''
+        res['Name'] = mem_obj.m_name or ''
+        res['CurMoney'] = mem_obj.total_money or 0.00
+        res['CurPoint'] = mem_obj.points or 0
+        res['Mobile'] = mem_obj.m_telephone or ''
+        res['Level'] = mem_obj.m_level.level_name or ''
+        res['Discount'] = mem_obj.m_level.percent or ''
+        res['MemPWD'] = self.pool.get('vip.member').get_password(cr, uid, ids)
+        
+        
+        new_add = self.pool.get('vip.charge.log').search(cr, uid, [('member_id','=',res['CardID'])], limit=1,order='date DESC', context=context)
+        if new_add:
+            addmoney = self.pool.get('vip.charge.log').read(cr,uid,new_add)
+            res['AddMoney'] = addmoney[0]['moneys']
+            
+        new_add = self.pool.get('vip.money.log').search(cr, uid, [('member_id','=',res['CardID'])], limit=1,order='date DESC', context=context)
+        if new_add:
+            addmoney = self.pool.get('vip.money.log').read(cr,uid,new_add)
+            res['CutMoney'] = addmoney[0]['moneys']
+        
+        new_add = self.pool.get('vip.points.log').search(cr, uid, [('member_id','=',res['CardID'])], limit=1,order='date DESC', context=context)
+        if new_add:
+            addmoney = self.pool.get('vip.points.log').read(cr,uid,new_add)
+            points = addmoney[0]['points']
+            if points < 0:
+                res['CutPoint'] = points
+            else:
+                res['AddPoint'] = points
+        
+        res['flag'] = True
+        return res
+        
+    def send_sms_temp(self, cr, uid, ids, modename, context=None):
+        res = {'flag':False,
+               'info':''}
+        mode_data = self.search_read(cr, uid, [('name','=',modename)], limit=1,context=context)
+        if not mode_data:
+            res['info'] = u'模板名称不可用'
+            return res
+        
+        modestatus = mode_data[0]['active']
+        if not modestatus:
+            res['info'] = u'模板名称为%s的模板设置了不可发送状态!' % modename
+            return res
+        modeinfo = mode_data[0]['details']
+        
+        tmpinfo = self.get_info(cr, uid, ids)
+        if tmpinfo['flag']:
+            for i in tmpinfo:
+                modeinfo = modeinfo.replace('{%s}' % i,unicode(tmpinfo[i]))
+            mobile = tmpinfo['Mobile']
+            if mobile:
+                status = self.pool.get('message.setting').send_sms(cr, uid, modeinfo, mobile)
+                if status['flag']:
+                    res['flag'] = True
+                    if modename == u'会员动态支付短信':
+                        res['SecCode'] = tmpinfo['SecCode']
+                else:
+                    res['info'] = status['info']
+            else:
+                res['info'] = u'当前会员手机号为空！'
+        else:
+            res['info'] = tmpinfo['info']
+        return res

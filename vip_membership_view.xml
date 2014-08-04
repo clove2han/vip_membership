@@ -36,7 +36,7 @@
                         <button name="member_off" string="注销" class="oe_highlight" type="object"/>
                         <button name="member_pwd" string="修改密码" class="oe_highlight" type="object"/>
                         <button name="member_sms_pwd" string="找回密码" class="oe_highlight" type="object"/>
-                        <button name="pro_exchange" string="兑换礼物" class="oe_highlight" type="action"/>
+                        <button name="pro_exchange" string="兑换礼物" class="oe_highlight" type="object"/>
                     </header>
 	                <sheet>
 	                	<group>
@@ -78,6 +78,21 @@
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_member_form"/>
             <field name="act_window_id" ref="action_membership_smallpos_member"/>
+        </record>
+
+        <record id="view_pos_member_filter" model="ir.ui.view">
+            <field name="name">vip.member.select</field>
+            <field name="model">vip.member</field>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <search string="会员搜索">
+                    <field name="member_id"/>
+                    <field name="m_telephone"/>
+                    <field name="m_name"/>
+                    <field name="m_identity_no"/>
+                    <separator/>
+                </search>
+            </field>
         </record>
 
         <!-- 会员等级 -->
@@ -171,6 +186,19 @@
             </field>
         </record>
 
+        <record id="view_product_filter" model="ir.ui.view">
+            <field name="name">vip.product.select</field>
+            <field name="model">vip.product</field>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <search string="礼物搜索">
+                    <field name="product_id"/>
+                    <field name="product_name"/>
+                    <separator/>
+                </search>
+            </field>
+        </record>
+
         <record model="ir.actions.act_window" id="action_membership_smallpos_product">
             <field name="name">礼物列表</field>
             <field name="res_model">vip.product</field>
@@ -195,10 +223,10 @@
             <field name="name">vip.setpoints.tree</field>
             <field name="model">vip.setpoints</field>
             <field name="arch" type="xml">
-                <tree string="积分规则">
-                        <field name="rule_id"/>
+                <tree string="积分规则" create="false" delete="false">
                         <field name="rule_money"/>
                         <field name="rule_point"/>
+                        <field name="rule_active"/>
                 </tree>
             </field>
         </record>
@@ -207,13 +235,13 @@
             <field name="name">vip.setpoints.form</field>
             <field name="model">vip.setpoints</field>
             <field name="arch" type="xml">
-                <form string="规则表单" version="7.0">
+                <form string="规则表单" create="false" delete="false" version="7.0">
                     <sheet>
                         <group>
                             <group>
-                                <field name="rule_id"/>
                                 <field name="rule_money"/>
                                 <field name="rule_point"/>
+                                <field name="rule_active"/>
                             </group>
                         </group>
                     </sheet>
@@ -241,26 +269,25 @@
         </record>
 
         <!-- 短信账户 -->
-<!--         <record model="ir.ui.view" id="view_message_setting_tree">
+        <record model="ir.ui.view" id="view_message_setting_tree">
             <field name="name">message.setting.tree</field>
             <field name="model">message.setting</field>
             <field name="arch" type="xml">
-                <tree string="短信账户">
+                <tree string="短信账户" create="false" delete="false">
                     <field name="account"/>
-                    <field name="password"/>
+                    <field name="password" password='True'/>
                 </tree>
             </field>
-        </record> -->
+        </record>
 
         <record model="ir.ui.view" id="view_message_setting_form">
             <field name="name">message.setting.form</field>
             <field name="model">message.setting</field>
-            <field name="view_mode">form</field>
             <field name="arch" type="xml">
                 <form string="短信账户" create="false" delete="false" version="7.0">
-                    <header>
+<!--                     <header>
                         <button name="check" string="验证" class="oe_highlight" type="object"/>
-                    </header>
+                    </header> -->
                     <sheet>
                         <group>
                             <group>
@@ -278,14 +305,14 @@
             <field name="view_mode">form</field>
             <field name="res_model">message.setting</field>
         </record>
-<!-- 
+
         <record model="ir.actions.act_window.view" id="action_message_setting_view_tree">
             <field name="sequence" eval="2"/>
             <field name="view_mode">tree</field>
             <field name="view_id" ref="view_message_setting_tree"/>
             <field name="act_window_id" ref="action_message_setting"/>
         </record>
- -->
+
         <record model="ir.actions.act_window.view" id="action_message_setting_view_form">
             <field name="sequence" eval="3"/>
             <field name="view_mode">form</field>
@@ -298,13 +325,11 @@
             <field name="name">message.template.tree</field>
             <field name="model">message.template</field>
             <field name="arch" type="xml">
-                <tree string="短信模板">
+                <tree string="短信模板"  create="false" delete="false" >
                     <field name="name"/>
-                    <field name="sms1"/>
-                    <field name="sms2"/>
-                    <field name="sms3"/>
-                    <field name="sms4"/>
-                    <field name="sms5"/>
+                    <field name="details"/>
+                    <field name="content"/>
+                    <field name="active"/>
                 </tree>
             </field>
         </record>
@@ -313,16 +338,50 @@
             <field name="name">message.template.form</field>
             <field name="model">message.template</field>
             <field name="arch" type="xml">
-                <form string="短信模板" version="7.0">
+                <form string="短信模板"  create="false" delete="false" version="7.0">
+                    <header>
+                        <table class='oe_list_content oe_form_sheet'>
+                            <thead>
+                                <tr class='oe_list_header_columns'>
+                                    <th colspan="7" class="th" style="text-align: center; font-weight: bold; height: 25px">
+                                        短信模板通配符说明
+                                    </th>
+                                </tr>
+                                <tr align="left">
+                                    <td colspan="7">
+                                        使用通配符功能可以使短信内容更加灵活，发送更加方便，请严格按照以下格式进行设置（通配符区分大小写）
+                                    </td>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr align="left">
+                                    <td>会员卡号：{CardID}</td>
+                                    <td>会员姓名：{Name}</td>
+                                    <td>充值金额：{AddMoney}</td>
+                                    <td>账户余额：{CurMoney}</td>
+                                    <td>消费金额：{CutMoney}</td>
+                                    <td>会员等级：{Level}</td>
+                                    <td>会员密码：{MemPWD}</td>
+                                </tr>
+                                <tr align="left">
+                                    <td>验证码：{SecCode}</td>
+                                    <td>当前日期：{Time}</td>
+                                    <td>积累积分：{AddPoint}</td>
+                                    <td>账户积分：{CurPoint}</td>
+                                    <td>消费积分：{CutPoint}</td>
+                                    <td>会员折扣：{Discount}</td>
+                                    <td></td>
+                                </tr>
+                        </tbody></table>
+                    </header>
                     <sheet>
                         <group>
                             <group>
                                 <field name="name"/>
-                                <field name="sms1"/>
-                                <field name="sms2"/>
-                                <field name="sms3"/>
-                                <field name="sms4"/>
-                                <field name="sms5"/>
+                                <field name="details"/>
+                                <field name="content"/>
+                                <field name="active"/>
                             </group>
                         </group>
                     </sheet>
@@ -354,7 +413,7 @@
             <field name="name">vip.charge.log.tree</field>
             <field name="model">vip.charge.log</field>
             <field name="arch" type="xml">
-                <tree string="充值记录" create="false">
+                <tree string="充值记录" create="false"  edit="false">
                     <field name="member_id"/>
                     <field name="moneys"/>
                     <field name="date"/>
@@ -364,6 +423,39 @@
             </field>
         </record>
         
+        <record model="ir.ui.view" id="view_charge_log_form">
+            <field name="name">vip.charge.log.form</field>
+            <field name="model">vip.charge.log</field>
+            <field name="arch" type="xml">
+                <form string="充值记录" create="false"  edit="false" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="member_id"/>
+                                <field name="moneys"/>
+                                <field name="date"/>
+                                <field name="user_id"/>
+                                <field name="comment"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_charge_log_filter" model="ir.ui.view">
+            <field name="name">vip.charge.log.select</field>
+            <field name="model">vip.charge.log</field>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <search string="充值记录搜索">
+                    <field name="member_id"/>
+                    <field name="user_id"/>
+                    <separator/>
+                </search>
+            </field>
+        </record>
+
         <record model="ir.actions.act_window" id="action_charge_log">
             <field name="name">充值记录</field>
             <field name="type">ir.actions.act_window</field>
@@ -380,12 +472,20 @@
             <field name="act_window_id" ref="action_charge_log"/>
         </record>
 
+
+        <record model="ir.actions.act_window.view" id="action_charge_log_view_form">
+            <field name="sequence" eval="4"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_charge_log_form"/>
+            <field name="act_window_id" ref="action_charge_log"/>
+        </record>
+
         <!-- 消费记录 -->
         <record model="ir.ui.view" id="view_money_log_tree">
             <field name="name">vip.money.log.tree</field>
             <field name="model">vip.money.log</field>
             <field name="arch" type="xml">
-                <tree string="消费记录" create="false">
+                <tree string="消费记录" create="false" edit="false">
                     <field name="member_id"/>
                     <field name="moneys"/>
                     <field name="name"/>
@@ -396,6 +496,42 @@
             </field>
         </record>
         
+        <record model="ir.ui.view" id="view_money_log_form">
+            <field name="name">vip.money.log.form</field>
+            <field name="model">vip.money.log</field>
+            <field name="arch" type="xml">
+                <form string="消费记录" create="false" edit="false" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="member_id"/>
+                                <field name="moneys"/>
+                                <field name="name"/>
+                                <field name="date"/>
+                                <field name="user_id"/>
+                                <field name="comment"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="view_money_log_filter" model="ir.ui.view">
+            <field name="name">vip.money.log.select</field>
+            <field name="model">vip.money.log</field>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <search string="消费记录搜索">
+                    <field name="member_id"/>
+                    <field name="name"/>
+                    <field name="user_id"/>
+                    <separator/>
+                </search>
+            </field>
+        </record>
+
         <record model="ir.actions.act_window" id="action_money_log">
             <field name="name">消费记录</field>
             <field name="type">ir.actions.act_window</field>
@@ -408,7 +544,14 @@
         <record model="ir.actions.act_window.view" id="action_money_log_view_tree">
             <field name="sequence" eval="4"/>
             <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_charge_log_tree"/>
+            <field name="view_id" ref="view_money_log_tree"/>
+            <field name="act_window_id" ref="action_money_log"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="action_money_log_view_form">
+            <field name="sequence" eval="4"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_money_log_form"/>
             <field name="act_window_id" ref="action_money_log"/>
         </record>
 
@@ -417,7 +560,7 @@
             <field name="name">vip.points.log.tree</field>
             <field name="model">vip.points.log</field>
             <field name="arch" type="xml">
-                <tree string="积分记录" create="false">
+                <tree string="积分记录" create="false" edit="false">
                     <field name="member_id"/>
                     <field name="points"/>
                     <field name="name"/>
@@ -428,6 +571,41 @@
             </field>
         </record>
         
+        <record model="ir.ui.view" id="view_points_log_form">
+            <field name="name">vip.points.log.form</field>
+            <field name="model">vip.points.log</field>
+            <field name="arch" type="xml">
+                <form string="消费记录" create="false" edit="false" version="7.0">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="member_id"/>
+                                <field name="points"/>
+                                <field name="name"/>
+                                <field name="date"/>
+                                <field name="user_id"/>
+                                <field name="comment"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_points_log_filter" model="ir.ui.view">
+            <field name="name">vip.points.log.select</field>
+            <field name="model">vip.points.log</field>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <search string="积分记录搜索">
+                    <field name="member_id"/>
+                    <field name="name"/>
+                    <field name="user_id"/>
+                    <separator/>
+                </search>
+            </field>
+        </record>
+
         <record model="ir.actions.act_window" id="action_points_log">
             <field name="name">积分记录</field>
             <field name="type">ir.actions.act_window</field>
@@ -443,74 +621,45 @@
             <field name="view_id" ref="view_points_log_tree"/>
             <field name="act_window_id" ref="action_points_log"/>
         </record>
-		<menuitem name="VIP会员管理" id="base.menu_pos_membership" sequence="39"/>
-		<menuitem name="会员管理" id="menu_membership" sequence="0" parent="base.menu_pos_membership"/>
-		<menuitem name="会员列表" id="menu_membership_list" sequence="0" parent="menu_membership" action="action_membership_smallpos_member"/>
-		<menuitem name="会员等级" id="menu_membership_level" sequence="1" parent="menu_membership" action="action_membership_smallpos_level"/>
-		<menuitem name="积分管理" id="menu_membership_points" sequence="1" parent="base.menu_pos_membership"/>
-        <menuitem name="礼物列表" id="menu_membership_product" sequence="0" parent="menu_membership_points" action="action_membership_smallpos_product"/>
-        <menuitem name="积分规则" id="menu_membership_setpoints" sequence="1" parent="menu_membership_points" action="action_membership_smallpos_setpoints"/>
-		<menuitem name="统计报表" id="menu_membership_reports" sequence="3" parent="base.menu_pos_membership"/>
-        <menuitem name="充值记录" id="menu_membership_charge_log" sequence="3" parent="menu_membership_reports" action="action_charge_log"/>
-        <menuitem name="消费记录" id="menu_membership_money_log" sequence="3" parent="menu_membership_reports" action="action_money_log"/>
-        <menuitem name="积分记录" id="menu_membership_points_log" sequence="3" parent="menu_membership_reports" action="action_points_log"/>
-		<menuitem name="短信管理" id="menu_membership_sms" sequence="4" parent="base.menu_pos_membership"/>
-        <menuitem name="短信账户" id="menu_membership_sms_account" sequence="0" parent="menu_membership_sms" action="action_message_setting"/>
-        <menuitem name="账户模板" id="menu_membership_sms_template" sequence="0" parent="menu_membership_sms" action="action_message_template"/>
 
-
-         <!-- test -->
-        <record model="ir.ui.view" id="view_test_tree">
-            <field name="name">vip.test.tree</field>
-            <field name="model">vip.money</field>
-            <field name="arch" type="xml">
-                <tree string="test">
-                    <field name="member_id"/>
-                    <field name="total_money"/>
-                    <field name="comment"/>
-                </tree>
-            </field>
-        </record>
-
-        <record model="ir.ui.view" id="view_test_form">
-            <field name="name">vip.test.form</field>
-            <field name="model">vip.money</field>
-            <field name="arch" type="xml">
-                <form string="会员表单" version="7.0">
-                    <sheet>
-                        <group>
-                            <group>
-                                <field name="member_id"/>
-                                <field name="total_money"/>
-                                <field name="comment"/>
-                            </group>
-                        </group>
-                    </sheet>
-                </form>
-            </field>
-        </record>
-
-        <record model="ir.actions.act_window" id="action_membership_smallpos_money">
-            <field name="name">会员列表</field>
-            <field name="res_model">vip.money</field>
-        </record>
-
-        <record model="ir.actions.act_window.view" id="action_membership_smallpos_test_view_tree">
-            <field name="sequence" eval="2"/>
-            <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_test_tree"/>
-            <field name="act_window_id" ref="action_membership_smallpos_money"/>
-        </record>
-
-        <record model="ir.actions.act_window.view" id="action_membership_smallpos_test_view_form">
-            <field name="sequence" eval="3"/>
+        <record model="ir.actions.act_window.view" id="action_points_log_view_form">
+            <field name="sequence" eval="4"/>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="view_test_form"/>
-            <field name="act_window_id" ref="action_membership_smallpos_money"/>
+            <field name="view_id" ref="view_points_log_form"/>
+            <field name="act_window_id" ref="action_points_log"/>
         </record>
 
-        <menuitem name="test删除" id="menu_membership_test" sequence="4" parent="base.menu_pos_membership"/>
-        <menuitem name="test" id="menu_membership_test1" sequence="0" parent="menu_membership_test" action="action_membership_smallpos_money"/>
-        <!-- test -->
+        <record model="ir.actions.client" id="action_export_manual">
+            <field name="name">VIP会员管理手动备份</field>
+            <field name="tag">vip.membership.export.manual</field>
+        </record>
+
+        <record model="ir.actions.client" id="action_import_file">
+            <field name="name">VIP会员管理恢复数据</field>
+            <field name="tag">vip.membership.import.file</field>
+        </record>
+ 
+		<menuitem name="VIP会员管理" id="base.menu_pos_membership" sequence="39"/>
+    		<menuitem name="会员管理" id="menu_membership" sequence="0" parent="base.menu_pos_membership"/>
+    		        <menuitem name="会员管理" id="menu_membership_list" sequence="0" parent="menu_membership" action="action_membership_smallpos_member"/>
+            <menuitem name="记录" id="menu_membership_log" sequence="1" parent="base.menu_pos_membership"/>
+                    <menuitem name="会员充值记录" id="menu_vip_charge_log" sequence="0" parent="menu_membership_log" action="action_charge_log"/>
+                    <menuitem name="会员消费记录" id="menu_vip_pay_log" sequence="1" parent="menu_membership_log" action="action_money_log"/>
+                    <menuitem name="会员积分记录" id="menu_vip_points_log" sequence="2" parent="menu_membership_log" action="action_points_log"/>
+    		<menuitem name="统计报表" id="menu_membership_reports" sequence="2" parent="base.menu_pos_membership"/>
+                    <menuitem name="会员信息详情" id="menu_vip_member_details" sequence="0" parent="menu_membership_reports" action="action_report_vip_memeber_details"/>
+                    <menuitem name="会员充值详情" id="menu_vip_charge_details" sequence="1" parent="menu_membership_reports" action="action_report_vip_charge_details"/>
+                    <menuitem name="会员消费详情" id="menu_vip_pay_details" sequence="2" parent="menu_membership_reports" action="action_report_vip_pay_details"/>
+                    <menuitem name="会员积分详情" id="menu_vip_points_details" sequence="3" parent="menu_membership_reports" action="action_report_vip_points_details"/>
+    		<menuitem name="设置" id="menu_membership_setting" sequence="3" parent="base.menu_pos_membership"/>
+                    <menuitem name="会员等级" id="menu_membership_level" sequence="0" parent="menu_membership_setting" action="action_membership_smallpos_level"/>
+                    <menuitem name="积分规则" id="menu_membership_setpoints" sequence="1" parent="menu_membership_setting" action="action_membership_smallpos_setpoints"/>
+                    <menuitem name="礼物管理" id="menu_membership_product" sequence="2" parent="menu_membership_setting" action="action_membership_smallpos_product"/>
+                    <menuitem name="短信账户" id="menu_membership_sms_account" sequence="3" parent="menu_membership_setting" action="action_message_setting"/>
+                    <menuitem name="账户模板" id="menu_membership_sms_template" sequence="4" parent="menu_membership_setting" action="action_message_template"/>
+<!--         <menuitem name="备份与恢复" id="menu_membership_data" sequence="5" parent="base.menu_pos_membership"/>
+        <menuitem name="手动备份" id="menu_membership_manual" sequence="0" parent="menu_membership_data" action="action_export_manual"/>
+        <menuitem name="恢复数据" id="menu_membership_import" sequence="1" parent="menu_membership_data" action="action_import_file"/> -->
+        
     </data>
 </openerp>

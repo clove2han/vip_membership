@@ -3,21 +3,21 @@ from openerp.osv import fields, osv
 from openerp.tools.translate import _
 
 CHARGE_TYPE=[
-    (1,'正常充值'),
-    (2,'赠送金额')
+    (1,u'正常充值'),
+    (2,u'赠送金额')
 ]
 ACTIVE_TYPE=[
-    (1,'是'),
-    (2,'否')
+    (1,u'是'),
+    (2,u'否')
 ]
 class member_charge(osv.osv_memory):
 #     _register = False
     _name = 'member.charge'
     
     _columns = {
-        'charge_amount': fields.float('充值金额',digits=(16,2)),
-        'charge_type': fields.selection(CHARGE_TYPE, '充值类型'),
-        'comment': fields.char('备注',size=36),
+        'charge_amount': fields.float(u'充值金额',digits=(16,2)),
+        'charge_type': fields.selection(CHARGE_TYPE, u'充值类型'),
+        'comment': fields.char(u'备注',size=36),
     }
     
     _defaults = {
@@ -33,10 +33,13 @@ class member_charge(osv.osv_memory):
         records = self.browse(cr, uid, ids, context=context)
         if records and len(records) == 1:
             self_obj = records[0]
-        if not (self_obj  or self_obj.charge_amount):
+        if not self_obj:
+            return {}
+        if self_obj.charge_amount <= 0:
             return {}
         c_type = self_obj.charge_type
         c_amount = self_obj.charge_amount
+        comment = self_obj.comment
         
         #会员信息
         mem_obj = None
@@ -46,28 +49,23 @@ class member_charge(osv.osv_memory):
         if records and len(records) == 1:
             mem_obj = records[0]
         if not mem_obj:
-            raise osv.except_osv( _('警告!'),_('获取会员信息失败！'))
+            raise osv.except_osv( _(u'充值失败!'),_(u'获取会员信息失败！'))
         if not mem_obj.m_normal:
-            raise osv.except_osv( _('警告!'),_('会员状态不可用！'))
+            raise osv.except_osv( _(u'充值失败!'),_(u'会员状态不可用！'))
         old_level = mem_obj.m_level
         
-        
-        #充值
-        money_obj = self.pool.get('vip.money').search(cr, uid, [('member_id','=',mem_obj.member_id)], context=context)
-        money_data = self.pool.get('vip.money').read(cr, uid, money_obj, context=context)
-        old_money = money_data[0]['total_money']
-        new_money = old_money + c_amount
-        self.pool.get('vip.money').write(cr, uid, money_data[0]['id'], {'total_money': new_money,})
-        
-        #充值记录
-        comment = {1:u"正常充值",2:u"赠送金额"}
-        new_records = {
-            'member_id':mem_obj.id,
-            'moneys':c_amount,
-            'user_id':uid,
-            'comment':comment.get(c_type,''),
-        }
-        self.pool.get('vip.charge.log').create(cr, uid, new_records)
+        type_dict = {
+                     1: u'正常充值',
+                     2: u'赠送金额',
+                     }
+        status = self.pool.get('vip.money').oper_money(cr,uid,
+                                                type=type_dict[c_type],
+                                                member_id=mem_obj.member_id, 
+                                                money=c_amount,
+                                                comment=comment,
+                                                context=None)
+        if 'fail' in status:
+            raise osv.except_osv( _(u'充值失败!'),status['fail'])
 
         #弹出等级提示窗口
         #正常充值时，判断是弹出升级框
@@ -100,7 +98,7 @@ class member_charge(osv.osv_memory):
                                 'content':context})
                     
                     return {
-                        'name': _('会员升级'),
+                        'name': _(u'会员升级'),
                         'view_type': 'form',
                         'view_mode': 'form',
                         'res_model': 'member.charge.level',
@@ -113,6 +111,7 @@ class member_charge(osv.osv_memory):
         
         
         #未升级情况发送发送短信提醒
+        self.pool.get('message.template').send_sms_temp(cr,uid,active_ids,u'会员充值发送短信')
 
 member_charge()
 
@@ -134,6 +133,8 @@ class member_charge_level(osv.osv_memory):
         level_id = context.get("level_id",None)
         if id and level_id:
             self.pool.get('vip.member').write(cr, uid, id, {'m_level':level_id})
+            #升级情况发送发送短信提醒
+            self.pool.get('message.template').send_sms_temp(cr,uid,[id],u'会员充值发送短信')
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',

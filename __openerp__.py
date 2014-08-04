@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 {
-    'name': 'VIP会员管理',
+    'name': u'VIP会员管理',
     'version': '0.1',
-    'category': 'VIP会员管理',
+    'category': u'VIP会员管理',
     'sequence': 5,
     'description': u"""
 通过会员管理，企业就可以记录所有会员客户的资料，了解用户的兴趣爱好、消费特 \
@@ -21,14 +21,27 @@
     'author': 'SmallPos Co. Ltd.',
     'depends': ['base','point_of_sale'],
     'data': [
+        'security/vip_membership_security.xml',
+        'security/ir.model.access.csv',
         'wizard/member_active_view.xml',
         'wizard/member_charge_view.xml',
         'wizard/member_loss_view.xml',
         'wizard/member_off_view.xml',
         'wizard/member_pwd_view.xml',
-        #'wizard/pro_exchange_view.xml',
-        'vip_membership_view.xml',
+        'wizard/vip_member_details.xml',
+        'wizard/vip_charge_details.xml',
+        'wizard/vip_pay_details.xml',
+        'wizard/vip_points_details.xml',
+        'wizard/pro_exchange_view.xml',
+        'vip_membership_view.xml', 
         'vip_membership_data.xml',
+        'vip_membership_report.xml'
+    ],
+    'js' : [
+        "static/src/js/*.js",
+    ],
+    'qweb' : [
+        "static/src/xml/*.xml",
     ],
     'installable': True,
     'auto_install': False,

@@ -52,7 +52,6 @@
             <field name="sequence" eval="3"/>
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_charge_form"/>
-            <field name="target">new</field>
             <field name="act_window_id" ref="action_membership_smallpos_charge"/>
         </record>
     </data>

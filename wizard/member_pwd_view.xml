@@ -8,7 +8,7 @@
                 <form string="密码表单" version="7.0">
 	                <group>
                         <group>
-    	                    <field name="old_pwd" password='True' class='old_pwd'/>
+    	                    <field name="old_pwd" password='True' placeholder="默认密码为空" class='old_pwd'/>
                             <field name="new_pwd" password='True'/>
                             <field name="confirm_pwd" password='True'/>
                         </group>
@@ -33,7 +33,6 @@
             <field name="sequence" eval="3"/>
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_pwd_form"/>
-            <field name="target">new</field>
             <field name="act_window_id" ref="action_membership_smallpos_pwd"/>
         </record>
     </data>

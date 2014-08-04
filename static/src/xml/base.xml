@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- vim:fdl=1:
+-->
+<templates id="template" xml:space="preserve">
+<t t-name="VIPExportView"> 
+    <div class="oe_view_manager oe_view_manager_current">
+            <div class="oe_view_manager_header oe_padding">
+                <h2 class="oe_view_title">
+                    导出一个zip备份文件
+                </h2>
+                <div class="oe_list_buttons">
+                    <button type="button" class="oe_button oe_list_export oe_highlight">
+                        导出
+                    </button>
+                    <button type="button" class="oe_button oe_list_save oe_highlight">
+                        保存
+                    </button>
+                    <span class="oe_alternative">
+                        <span class="oe_fade">or</span>
+                        <a href="#" class="oe_bold oe_import_cancel">取消</a>
+                    </span>
+                </div>
+            </div>
+            <div class="oe_view_manager_body">
+                <table class="oe_list_content">
+                    <thead>
+                        <tr class="oe_list_header_columns">
+                            <td><span >请选择需要备份的数据：</span></td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td width="20%" >
+                                <span>
+                                    <input type="checkbox" name="backup" value="1"/>
+                                </span>
+                            </td>
+                            <td width="80%" >
+                                <label>会员基本信息</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%" >
+                                <span>
+                                    <input type="checkbox" name="backup" value="2"/>
+                                </span>
+                            </td>
+                            <td width="80%" >
+                                <label>会员预存款信息</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%" >
+                                <span>
+                                    <input type="checkbox" name="backup" value="3"/>
+                                </span>
+                            </td>
+                            <td width="80%" >
+                                <label>会员积分信息</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%" >
+                                <span>
+                                    <input type="checkbox" name="backup" value="4"/>
+                                </span>
+                            </td>
+                            <td width="80%" >
+                                <label>充值记录信息</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%" >
+                                <span>
+                                    <input type="checkbox" name="backup" value="5" />
+                                </span>
+                            </td>
+                            <td width="80%" >
+                                <label>消费记录信息</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="20%" >
+                                <span>
+                                    <input type="checkbox" name="backup" value="6"/>
+                                </span>
+                            </td>
+                            <td width="80%" >
+                                <label>积分记录信息</label>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td class="oe_list_footer oe_number"></td>
+                            <td class="oe_list_footer oe_number"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div> 
+    </div>
+</t>
+
+<t t-name="VIPImportView">
+    <div class="oe_view_manager oe_view_manager_current">
+            <div class="oe_view_manager_header oe_padding">
+                <h2 class="oe_view_title">
+                    导入一个zip备份文件
+                </h2>
+                <div class="oe_list_buttons">
+                    <button type="button" class="oe_button oe_list_import oe_highlight">
+                        导入
+                    </button>
+                    <span class="oe_alternative">
+                        <span class="oe_fade">or</span>
+                        <a href="#" class="oe_bold oe_import_cancel">取消</a>
+                    </span>
+                </div>
+            </div>
+            <div class="oe_view_manager_body oe_import">
+                    <form action="" method="post" enctype="multipart/form-data" class="oe_import">
+                        <p>请上传一个zip备份文件：</p>
+                        <div class="oe_import_box">
+                            <label for="file_backup" autofocus="autofocus">备份文件：</label>
+                            <input type="file" id="file_backup"
+                                   name="file" class="oe_import_file"/>
+                            <button type="button" class="oe_import_file_reload" title="刷新数据">
+                                <img src="/web/static/src/img/icons/gtk-refresh.png"/>
+                            </button>
+                        </div>
+                    </form>
+            </div> 
+            <table class="oe_import_grid" />
+    </div>
+</t>
+<t t-name="VIPImportView.result">
+    <table class="oe_import_grid" width="100%" style="margin: 5px 0;">
+        <tr t-if="headers" class="oe_import_grid-header">
+            <td t-foreach="headers" t-as="header" class="oe_import_grid-cell">
+                <t t-esc="header"/></td>
+        </tr>
+        <tr>
+            <td t-foreach="records[0]" t-as="column">
+                <input class="sel_fields" placeholder="--- Don't Import ---"/><span class="oe_m2o_drop_down_button">
+                        <img t-att-src='_s + "/web/static/src/img/down-arrow.png"' draggable="false"/></span>
+            </td>
+        </tr>
+        <tr t-foreach="records" t-as="record" class="oe_import_grid-row">
+            <td t-foreach="record" t-as="cell" class="oe_import_grid-cell">
+                <t t-esc="cell"/></td>
+        </tr>
+    </table>
+</t>
+</templates>

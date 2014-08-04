@@ -29,7 +29,6 @@
             <field name="sequence" eval="3"/>
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_member_loss_form"/>
-            <field name="target">new</field>
             <field name="act_window_id" ref="action_member_loss"/>
         </record>
     </data>

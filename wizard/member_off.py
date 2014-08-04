@@ -9,7 +9,7 @@ class member_off(osv.osv_memory):
         'comment': fields.char('',size=64, readonly=True),
     }
     _defaults ={
-        'comment': '确定注销该会员吗？',
+        'comment': u'确定注销该会员吗？',
     }
 
     def run(self, cr, uid, ids, context=None):
@@ -24,6 +24,7 @@ class member_off(osv.osv_memory):
                 'm_off': True,
             }
             self.pool.get('vip.member').write(cr, uid, active_ids, new_status)
+            self.pool.get('message.template').send_sms_temp(cr,uid,active_ids,u'会员注销发送短信')
 
         return {
             'type': 'ir.actions.client',

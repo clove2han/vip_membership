@@ -13,54 +13,65 @@
           <field name="password">123456</field>
         </record>
 
+        <record id="default message setpoints" model="vip.setpoints">
+          <field name="rule_money">1</field>
+          <field name="rule_point">1</field>
+          <field name="rule_active">True</field>
+        </record>
+
         <record id="default message setting1" model="message.template">
           <field name="name">会员充值发送短信</field>
-          <field name="sms1">您好，您本次充值金额为</field>
-          <field name="sms2">元，当前卡内余额为</field>
-          <field name="sms3">元，欢迎推荐身边其他朋友使用我们公司的会员卡。</field>
+          <field name="details">您好，您本次充值金额为{AddMoney}元，当前卡内余额为{CurMoney}元，欢迎推荐身边其他朋友使用我们公司的会员卡，优惠等着你。</field>
+          <field name="content"></field>
+          <field name="active">True</field>
         </record>
         <record id="default message setting2" model="message.template">
-          <field name="name">会员升等级发送短信</field>
-          <field name="sms1">您好，您本次充值金额为</field>
-          <field name="sms2">元，已升级为</field>
-          <field name="sms3">，您将享有</field>
-          <field name="sms4">折的折扣，现总余额为</field>
-          <field name="sms5">元。</field>
+          <field name="name">会员挂失发送短信</field>
+          <field name="details">您好，您的卡号为{CardID}的会员卡已成功挂失，请携带有效证件到我公司重新激活方可进行消费。</field>
+          <field name="content"></field>
+          <field name="active">True</field>
         </record>
         <record id="default message setting3" model="message.template">
-          <field name="name">兑换商品短信</field>
-          <field name="sms1">您好，您本次兑换商品为</field>
-          <field name="sms2">，消费积分</field>
-          <field name="sms3">个点，剩余积分</field>
-          <field name="sms4">个点，积分多多，实惠多多！</field>
+          <field name="name">会员注销发送短信</field>
+          <field name="details">您好，您的卡号为{CardID}的会员卡已成功注销，请携带有效证件到我公司重新激活方可进行消费。</field>
+          <field name="content"></field>
+          <field name="active">True</field>
         </record>
         <record id="default message setting4" model="message.template">
-          <field name="name">会员重新激活短信</field>
-          <field name="sms1">您好，您卡号为</field>
-          <field name="sms2">的会员卡已经重新激活，充值消费均已可正常可用。</field>
+          <field name="name">会员激活发送短信</field>
+          <field name="details">您好，您的卡号为{CardID}的会员卡已成功激活，充值消费均已可正常可用。</field>
+          <field name="content"></field>
+          <field name="active">True</field>
         </record>
         <record id="default message setting5" model="message.template">
           <field name="name">会员消费发送短信</field>
-          <field name="sms1">您好，您本次消费金额为</field>
-          <field name="sms2">元，卡内余额为</field>
-          <field name="sms3">元，本次积分</field>
-          <field name="sms4">个点，卡内总积分为</field>
-          <field name="sms5">个点，欢迎下次继续光临！</field>
+          <field name="details">您好，您本次消费金额为{CutMoney}元，卡内余额为{CurMoney}元，本次增加积分{AddPoint}，当前积分为{CurPoint}，欢迎下次继续光临！</field>
+          <field name="content"></field>
+          <field name="active">True</field>
         </record>
         <record id="default message setting6" model="message.template">
-          <field name="name">会员消费验证手机</field>
-          <field name="sms1">您好！您的支付验证码为</field>
-          <field name="sms2">，请勿将验证码透露给其他人。</field>
+          <field name="name">会员积分发送短信</field>
+          <field name="details">您好，本次增加积分{AddPoint}，当前积分为{CurPoint}，欢迎下次继续光临！</field>
+          <field name="content"></field>
+          <field name="active">True</field>
         </record>
         <record id="default message setting7" model="message.template">
-          <field name="name">会员验证手机</field>
-          <field name="sms1">您的验证码是：</field>
-          <field name="sms2">。请不要把验证码泄露给其他人。</field>
+          <field name="name">会员动态支付短信</field>
+          <field name="details">您好！您的支付验证码为{SecCode}，请勿将验证码透露给其他人。</field>
+          <field name="content"></field>
+          <field name="active">True</field>
         </record>
         <record id="default message setting8" model="message.template">
-          <field name="name">会员注册手机验证成功</field>
-          <field name="sms1">您好，您卡号为</field>
-          <field name="sms2">的会员卡，已通过验证，通过验证的手机以后消费可直接使用手机验证进行会员支付。</field>
+          <field name="name">会员发送密码短信</field>
+          <field name="details">您好！您的支付密码为{MemPWD}，请保管好你的密码。</field>
+          <field name="content"></field>
+          <field name="active">True</field>
+        </record>
+        <record id="default message setting9" model="message.template">
+          <field name="name">会员注册成功短信</field>
+          <field name="details">您好，恭喜您成为本公司的会员，您的卡号为{CardID}的会员卡，会员等级为{Level}，享受折扣{Discount}，您可通过充值提升会员等级，享受更多优惠！</field>
+          <field name="content"></field>
+          <field name="active">True</field>
         </record>
     </data>
 </openerp>
