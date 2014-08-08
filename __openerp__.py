@@ -5,6 +5,7 @@
     'version': '0.1',
     'category': u'VIP会员管理',
     'sequence': 5,
+    'summary': u'Small Pos VIP会员预付款、积分管理',
     'description': u"""
 通过会员管理，企业就可以记录所有会员客户的资料，了解用户的兴趣爱好、消费特 \
 点、意向需求 等；同时针对客户的需求，为其提供优质的个性化服务；会员管理系统还能 \
@@ -19,7 +20,7 @@
     * 报表
     """,
     'author': 'SmallPos Co. Ltd.',
-    'depends': ['base','point_of_sale'],
+    'depends': ['base'],
     'data': [
         'security/vip_membership_security.xml',
         'security/ir.model.access.csv',

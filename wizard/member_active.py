@@ -18,6 +18,11 @@ class member_active(osv.osv_memory):
         active_ids = context.get('active_ids', [])
         records = self.pool.get(active_model).browse(cr, uid, active_ids, context=context)
         if records and len(records) == 1:
+            mem_obj = records[0]
+            if not mem_obj:
+                raise osv.except_osv( u'激活失败!',u'获取会员信息失败！')
+            if mem_obj.m_off:
+                raise osv.except_osv( u'激活失败!',u'已注销的卡不能激活！')
             new_status = {
                 'm_normal': True,
                 'm_loss': False,

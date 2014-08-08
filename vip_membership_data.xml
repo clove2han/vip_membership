@@ -5,7 +5,7 @@
           <field name="level_name">普通会员</field>
           <field name="min_money">0.00</field>
           <field name="max_money">0.00</field>
-          <field name="percent">1.00</field>
+          <field name="percent">0</field>
         </record>
 
         <record id="default message setting" model="message.setting">

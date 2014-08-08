@@ -46,7 +46,7 @@ class vip_points_details(report_sxw.rml_parse):
                 'm_name': points.member_id.m_name,
                 'type': points.type,
                 'points': points.points,
-                'name':points.name.name,
+                'name':points.name,
                 'user_id': points.user_id.login,
             }
             data.append(result)

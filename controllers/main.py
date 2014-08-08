@@ -8,6 +8,7 @@ import csv
 import os
 import simplejson
 import operator
+import tempfile
 from cStringIO import StringIO
 try:
     import xlwt
@@ -114,7 +115,7 @@ class vip_membership(http.Controller):
                     member_info['member_id'] = member_data.member_id
                     member_info['card_status'] = member_data.card_status
                     member_info['m_level'] = member_data.m_level.level_name
-                    member_info['discount'] = member_data.m_level.percent
+                    member_info['discount'] = "%.2f" % (member_data.m_level.percent / float(100))
                     member_info['total_money'] = member_data.total_money
                     member_info['points'] = member_data.points
                     
@@ -140,10 +141,14 @@ class vip_membership(http.Controller):
         res = {'flag':False,
                'info':''
         }
+        context = {}
         cr, uid = request.cr, openerp.SUPERUSER_ID
         member_id = str(args['member_id'])
+        first_moneys = args['first_moneys']
         last_money = args['last_money']
         points = args['points']
+        context['CutMoney'] = last_money
+        context['AddPoint'] = points
         name = str(args['name'])
         type = args['type']
         password = str(args['pwd'])
@@ -169,7 +174,8 @@ class vip_membership(http.Controller):
                                                 type=u'消费',
                                                 member_id=member_id,
                                                 name=name,
-                                                money=last_money)
+                                                money=last_money,
+                                                cost_moneys=first_moneys,)
         if status['flag']:
             #计算积分
             status = request.registry.get('vip.points').oper_points(cr,uid,
@@ -181,7 +187,7 @@ class vip_membership(http.Controller):
                 #发送短信
                 modename = u'会员消费发送短信'
                 ids = request.registry.get('vip.member').search(cr,uid,[('member_id', '=', member_id),])
-                request.registry.get('message.template').send_sms_temp(cr, uid, ids, modename)
+                request.registry.get('message.template').send_sms_temp(cr, uid, ids, modename,context)
                 res['flag'] = True
             else:
                 res['info'] = status['info']
@@ -195,10 +201,13 @@ class vip_membership(http.Controller):
         res = {'flag':False,
                'info':''
         }
+        context = {}
         cr, uid = request.cr, openerp.SUPERUSER_ID
         member_id = str(args['member_id'])
         last_money = args['last_money']
         points = args['points']
+        context['CutMoney'] = last_money
+        context['AddPoint'] = points
         name = str(args['name'])
 
         #计算积分
@@ -211,7 +220,7 @@ class vip_membership(http.Controller):
             #发送短信
             modename = u'会员积分发送短信'
             ids = request.registry.get('vip.member').search(cr,uid,[('member_id', '=', member_id),])
-            request.registry.get('message.template').send_sms_temp(cr, uid, ids, modename)
+            request.registry.get('message.template').send_sms_temp(cr, uid, ids, modename,context)
             res['flag'] = True
         else:
             res['info'] = status['info']
@@ -220,7 +229,10 @@ class vip_membership(http.Controller):
 class zip_obj(object):
     def __init__(self):
         # Create the in-memory file-like object
-        self.path = r'D:/tmp'
+        tmpdir = tempfile.gettempdir()
+        self.path = os.path.join(tmpdir,"openerp_vip")
+        if not os.path.isdir(self.path):
+            os.mkdir(self.path)
         self.in_memory_zip = StringIO()
     def add_file(self):
         f = zipfile.ZipFile(self.in_memory_zip,'w',zipfile.ZIP_DEFLATED)
@@ -276,11 +288,13 @@ class ZIPRecovery(zip_obj, http.Controller):
         ids = Model.search([], 0, False, False, request.context)
         fields = Model.fields_get()
         field_names = [i for i in fields if 'function' not in fields[i]]
+        field_names.sort()
         import_data = Model.export_data(ids, field_names, self.raw_data, context=request.context).get('datas',[])
         columns_headers = field_names
         self.data2csv(modename,columns_headers,import_data)
         
     def data2csv(self, modename,fields, rows):
+        print "self.path",self.path
         fullpath = os.path.join(self.path,modename+'.csv')
         fp = file(fullpath,'w')
         writer = csv.writer(fp, quoting=csv.QUOTE_ALL)

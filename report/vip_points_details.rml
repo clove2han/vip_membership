@@ -180,7 +180,7 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="80.0,80.0,32.0,80.0,80.0,80.0,80.0" style="Table4">
+    <blockTable colWidths="60.0,80.0,52.0,80.0,80.0,80.0,80.0" style="Table4">
       <tr>
         <td>
           <para style="terp_default_9">积分日期</para>
@@ -207,7 +207,7 @@
     </blockTable>
     <section>
       <para style="terp_default_1">[[ repeatIn(vip_points_info(data['form']), 'line_ids') ]]</para>
-      <blockTable colWidths="80.0,80.0,32.0,80.0,80.0,80.0,80.0" style="Table6">
+      <blockTable colWidths="60.0,80.0,52.0,80.0,80.0,80.0,80.0" style="Table6">
         <tr>
           <td>
             <para style="terp_default_9">[[ formatLang(line_ids['date'],date=True) ]]</para>

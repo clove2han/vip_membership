@@ -42,7 +42,7 @@ class vip_money(osv.osv):
         'total_money': 0,
     }
 
-    def oper_money(self,cr,uid,type,member_id,money,name='',comment='',context=None):
+    def oper_money(self,cr,uid,type,member_id,money,cost_moneys=0,name='',comment='',context=None):
         '''
         type:正常充值，赠送金额，消费
         member_id:会员卡号
@@ -82,6 +82,7 @@ class vip_money(osv.osv):
                     #消费记录
                     new_records = {
                         'member_id': mem_ids,
+                        'cost_moneys':cost_moneys,
                         'moneys': money,
                         'user_id': uid,
                         'name': name,
@@ -307,7 +308,7 @@ class vip_member(osv.osv):
         if records and len(records) == 1:
             mem_obj = records[0]
             m_password = decryptData(key,mem_obj.m_password,mode) or ''
-            print '==db==',repr(m_password),'===input===',repr(old_passwd)
+#             print '==db==',repr(m_password),'===input===',repr(old_passwd)
             if  m_password == old_passwd:
                 return True
         return False
@@ -397,7 +398,7 @@ class vip_member(osv.osv):
     
     #找回密码
     def member_sms_pwd(self, cr, uid, ids, context=None):
-        status = self.pool.get('message.template').send_sms_temp(cr,uid,ids,u'会员发送密码短信')
+        status = self.pool.get('message.template').send_sms_temp(cr,uid,ids,u'会员发送密码短信',context)
         if status["flag"]:
             return {
                 'type': 'ir.actions.client',
@@ -441,11 +442,12 @@ class vip_money_log(osv.osv):
 
     _columns = {
         'member_id': fields.many2one('vip.member',string=u'会员卡号', select=True, ondelete='cascade', required=True),
+        'cost_moneys': fields.float(u'折前价', digits=(16,2), required=True),
         'moneys': fields.float(u'消费金额', digits=(16,2), required=True),
-        'name': fields.many2one('pos.config',u'销售点名称', required=True),
+        'name': fields.char(u'销售点名称', size=32,required=True),
         'date':  fields.datetime(u'日期', readonly=True, select=True),
         'user_id': fields.many2one('res.users', u'操作员', required=True),
-        'comment': fields.char(u'备注',size=36),
+        'comment': fields.char(u'备注',size=128),
         #'company_id':fields.many2one('res.company', 'Company', required=True, readonly=True),
     }
     
@@ -470,11 +472,11 @@ class vip_points_log(osv.osv):
     _columns = {
         'member_id': fields.many2one('vip.member',string=u'会员卡号', select=True, ondelete='cascade', required=True),
         'points': fields.integer(u'消费积分', required=True),
-        'name': fields.many2one('pos.config',u'销售点名称'),
+        'name': fields.char(u'销售点名称', size=32,required=True),
         'date':  fields.datetime(u'日期', readonly=True, select=True, required=True),
         'type': fields.char(u'类型',size=12),
         'user_id': fields.many2one('res.users', u'操作员', required=True),
-        'comment': fields.char(u'备注',size=36),
+        'comment': fields.char(u'备注',size=128),
         #'company_id':fields.many2one('res.company', 'Company', required=True, readonly=True),
     }
     
@@ -502,7 +504,7 @@ class vip_charge_log(osv.osv):
         'type': fields.char(u'类型',size=12, required=True),
         'date':  fields.datetime(u'日期', readonly=True, select=True),
         'user_id': fields.many2one('res.users', u'操作员', required=True),
-        'comment': fields.char(u'备注',size=36),
+        'comment': fields.char(u'备注',size=128),
         #'company_id':fields.many2one('res.company', 'Company', required=True, readonly=True),
     }
     
@@ -575,11 +577,11 @@ class vip_level(osv.osv):
         'level_name': fields.char(u'等级名称', size=10, required=True, help=u'设置会员等级的名称'),
         'min_money': fields.float(u'最小金额', digits=(16,2),required=True, help=u'最小金额上限'),
         'max_money': fields.float(u'最大金额', digits=(16,2),required=True, help=u'最大金额上限'),
-        'percent': fields.float(u'享受折扣',digits=(16,2),required=True,help=u'该会员等级享受的折扣，填写0.88表示为打8.8折'),
+        'percent': fields.integer(u'享受折扣',digits=(16,2),required=True,help=u'该会员等级享受的折扣，填写88表示为打8.8折'),
     }
     
     _sql_constraints = [
-        ('percent_low_than_1', 'CHECK (percent<=1.00)', u'折扣值不能大于1!'),
+        ('percent_low_than_1', 'CHECK (percent<=100)', u'折扣值不能大于100!'),
         ('percent_uniq', 'unique(percent)',u'享受折扣不能和其他重复！'),
         ('percent_min_low_max', 'CHECK(min_money<=max_money)',u'最大金额必须大于等于最小金额！'),
     ]
@@ -660,8 +662,9 @@ class message_setting(osv.osv):
             code=sms_res[sms_res.index("<code>")+6:sms_res.index("</code>")]
             msg=sms_res[sms_res.index("<msg>")+5:sms_res.index("</msg>")]
             if code!='2':
-                res['info'] =  msg.decode("utf-8")
+                res['info'] =  u"短信服务商返回信息：" + msg.decode("utf-8") + u"。"
             else:
+                time.sleep(3)
                 res['flag'] =True
         else:
             res['info'] = u'发送短信错误，会员无手机号或短信账户不正确'
@@ -679,6 +682,8 @@ class message_template(osv.osv):
     }
     
     def get_info(self,cr,uid,ids,context=None):
+        if not context:
+            context = {}
         res = {
             'flag':False,
             'info':'',
@@ -711,27 +716,30 @@ class message_template(osv.osv):
         res['Mobile'] = mem_obj.m_telephone or ''
         res['Level'] = mem_obj.m_level.level_name or ''
         res['Discount'] = mem_obj.m_level.percent or ''
-        res['MemPWD'] = self.pool.get('vip.member').get_password(cr, uid, ids)
+        res['MemPWD'] = self.pool.get('vip.member').get_password(cr, uid, ids) or u"空"
         
-        
-        new_add = self.pool.get('vip.charge.log').search(cr, uid, [('member_id','=',res['CardID'])], limit=1,order='date DESC', context=context)
-        if new_add:
-            addmoney = self.pool.get('vip.charge.log').read(cr,uid,new_add)
-            res['AddMoney'] = addmoney[0]['moneys']
-            
-        new_add = self.pool.get('vip.money.log').search(cr, uid, [('member_id','=',res['CardID'])], limit=1,order='date DESC', context=context)
-        if new_add:
-            addmoney = self.pool.get('vip.money.log').read(cr,uid,new_add)
-            res['CutMoney'] = addmoney[0]['moneys']
-        
-        new_add = self.pool.get('vip.points.log').search(cr, uid, [('member_id','=',res['CardID'])], limit=1,order='date DESC', context=context)
-        if new_add:
-            addmoney = self.pool.get('vip.points.log').read(cr,uid,new_add)
-            points = addmoney[0]['points']
-            if points < 0:
-                res['CutPoint'] = points
-            else:
-                res['AddPoint'] = points
+        res['AddMoney'] = context.get("AddMoney")
+        res['CutMoney'] = context.get("CutMoney")
+        res['CutPoint'] = context.get("CutPoint")
+        res['AddPoint'] = context.get("AddPoint")
+#         new_add = self.pool.get('vip.charge.log').search(cr, uid, [('member_id','=',res['CardID'])], limit=1,order='date DESC', context=context)
+#         if new_add:
+#             addmoney = self.pool.get('vip.charge.log').read(cr,uid,new_add)
+#             res['AddMoney'] = addmoney[0]['moneys']
+#             
+#         new_add = self.pool.get('vip.money.log').search(cr, uid, [('member_id','=',res['CardID'])], limit=1,order='date DESC', context=context)
+#         if new_add:
+#             addmoney = self.pool.get('vip.money.log').read(cr,uid,new_add)
+#             res['CutMoney'] = addmoney[0]['moneys']
+#         
+#         new_add = self.pool.get('vip.points.log').search(cr, uid, [('member_id','=',res['CardID'])], limit=1,order='date DESC', context=context)
+#         if new_add:
+#             addmoney = self.pool.get('vip.points.log').read(cr,uid,new_add)
+#             points = addmoney[0]['points']
+#             if points < 0:
+#                 res['CutPoint'] = points
+#             else:
+#                 res['AddPoint'] = points
         
         res['flag'] = True
         return res
@@ -750,7 +758,7 @@ class message_template(osv.osv):
             return res
         modeinfo = mode_data[0]['details']
         
-        tmpinfo = self.get_info(cr, uid, ids)
+        tmpinfo = self.get_info(cr, uid, ids,context)
         if tmpinfo['flag']:
             for i in tmpinfo:
                 modeinfo = modeinfo.replace('{%s}' % i,unicode(tmpinfo[i]))
@@ -767,4 +775,6 @@ class message_template(osv.osv):
                 res['info'] = u'当前会员手机号为空！'
         else:
             res['info'] = tmpinfo['info']
+#         print u'=======发送内容======',modeinfo
+#         print u'=======收到结果======',res['flag'],res['info']
         return res

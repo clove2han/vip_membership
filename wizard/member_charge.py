@@ -39,6 +39,7 @@ class member_charge(osv.osv_memory):
             return {}
         c_type = self_obj.charge_type
         c_amount = self_obj.charge_amount
+        context['AddMoney'] = c_amount
         comment = self_obj.comment
         
         #会员信息
@@ -111,7 +112,7 @@ class member_charge(osv.osv_memory):
         
         
         #未升级情况发送发送短信提醒
-        self.pool.get('message.template').send_sms_temp(cr,uid,active_ids,u'会员充值发送短信')
+        self.pool.get('message.template').send_sms_temp(cr,uid,active_ids,u'会员充值发送短信',context)
 
 member_charge()
 
@@ -134,7 +135,7 @@ class member_charge_level(osv.osv_memory):
         if id and level_id:
             self.pool.get('vip.member').write(cr, uid, id, {'m_level':level_id})
             #升级情况发送发送短信提醒
-            self.pool.get('message.template').send_sms_temp(cr,uid,[id],u'会员充值发送短信')
+            self.pool.get('message.template').send_sms_temp(cr,uid,[id],u'会员充值发送短信',context)
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',

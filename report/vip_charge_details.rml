@@ -180,7 +180,7 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="100.0,80.0,32.0,100.0,100.0,100.0" style="Table4">
+    <blockTable colWidths="80.0,80.0,52.0,100.0,100.0,100.0" style="Table4">
       <tr>
         <td>
           <para style="terp_default_9">充值日期</para>
@@ -204,7 +204,7 @@
     </blockTable>
     <section>
       <para style="terp_default_1">[[ repeatIn(vip_charge_info(data['form']), 'line_ids') ]]</para>
-      <blockTable colWidths="100.0,80.0,32.0,100.0,100.0,100.0" style="Table6">
+      <blockTable colWidths="80.0,80.0,52.0,100.0,100.0,100.0" style="Table6">
         <tr>
           <td>
             <para style="terp_default_9">[[ formatLang(line_ids['date'],date=True) ]]</para>
