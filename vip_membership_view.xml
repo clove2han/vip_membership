@@ -487,7 +487,6 @@
             <field name="arch" type="xml">
                 <tree string="消费记录" create="false" edit="false">
                     <field name="member_id"/>
-                    <field name="cost_moneys"/>
                     <field name="moneys"/>
                     <field name="name"/>
                     <field name="date"/>
@@ -506,7 +505,6 @@
                         <group>
                             <group>
                                 <field name="member_id"/>
-                                <field name="cost_moneys"/>
                                 <field name="moneys"/>
                                 <field name="name"/>
                                 <field name="date"/>
@@ -661,7 +659,7 @@
                     <menuitem name="短信模板" id="menu_membership_sms_template" sequence="4" parent="menu_membership_setting" action="action_message_template"/>
         <menuitem name="备份与恢复" id="menu_membership_data" sequence="5" parent="base.menu_pos_membership"/>
         <menuitem name="手动备份" id="menu_membership_manual" sequence="0" parent="menu_membership_data" action="action_export_manual"/>
-        <!-- <menuitem name="恢复数据" id="menu_membership_import" sequence="1" parent="menu_membership_data" action="action_import_file"/> -->
+        <menuitem name="恢复数据" id="menu_membership_import" sequence="1" parent="menu_membership_data" action="action_import_file"/>
         
     </data>
 </openerp>

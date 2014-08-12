@@ -1,4 +1,5 @@
 openerp.vip_membership = function (instance) {
+    var QWeb = instance.web.qweb;
     _t = instance.web._t;
     instance.web.client_actions.add('vip.membership.export.manual', 'instance.web.vip_export');
     instance.web.vip_export = instance.web.Widget.extend({
@@ -52,15 +53,28 @@ openerp.vip_membership = function (instance) {
     },
 
     loaded_file: function () {
-        alert("aaa");
+        var self = this;
+        var options = {jsonp: _.uniqueId('import_callback_')};
+        window.top.callback = function(data){
+                console.log(data.flag);
+                if (data.flag){
+                    items = data.result;
+                    console.log(items);
+                    for(item in items) {
+                        console.log(item);
+                    console.log(items[item]);
+                    self.$el.addClass('oe_import_preview');
+                    self.$('.oe_import_tables').append(QWeb.render('VIPImportView.result', items[item]));
+                    }
+                }
+        };
         var ajax_option=
         {
             url:"/vip_import/set_file",
             success:function(data){
-                alert(data);
+                eval(data);
             },
         };
-        console.log(this.$el.find('form.oe_import'));
         this.$el.find('form.oe_import').ajaxSubmit(ajax_option);
     },
     settings_changed: function(){

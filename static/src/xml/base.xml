@@ -131,24 +131,44 @@
                         </div>
                     </form>
             </div> 
-            <table class="oe_import_grid" />
+            <div class="oe_import_tables" />
     </div>
 </t>
 <t t-name="VIPImportView.result">
     <table class="oe_import_grid" width="100%" style="margin: 5px 0;">
+        <tr>
+            <th colspan="5"><t t-esc="model"/></th>
+        </tr>
         <tr t-if="headers" class="oe_import_grid-header">
             <td t-foreach="headers" t-as="header" class="oe_import_grid-cell">
-                <t t-esc="header"/></td>
+                <t t-esc="fields[header].string"/></td>
         </tr>
-        <tr>
-            <td t-foreach="records[0]" t-as="column">
-                <input class="sel_fields" placeholder="--- Don't Import ---"/><span class="oe_m2o_drop_down_button">
-                        <img t-att-src='_s + "/web/static/src/img/down-arrow.png"' draggable="false"/></span>
+        <tr t-foreach="preview" t-as="row" class="oe_import_grid-row">
+            <td t-foreach="row" t-as="cell" class="oe_import_grid-cell"><t t-esc="cell"/>
+                <table class="field_value_table" border="1">
+                    <tr class="field_value_tr">
+                        <td>New</td>
+                        <td>吴昊</td>
+                        <td>119.0</td>
+                        <td>9折</td>
+                        <td>18049896466</td>
+                    </tr>
+                    <tr class="field_value_tr">
+                        <td>Old</td>
+                        <td>吴昊</td>
+                        <td>110</td>
+                        <td>8折</td>
+                        <td>18049896461</td>
+                    </tr>
+                    <tr>
+                        <td>Curr</td>
+                        <td>吴昊</td>
+                        <td>110</td>
+                        <td>8折</td>
+                        <td>18049896461</td>
+                    </tr>
+                </table>
             </td>
-        </tr>
-        <tr t-foreach="records" t-as="record" class="oe_import_grid-row">
-            <td t-foreach="record" t-as="cell" class="oe_import_grid-cell">
-                <t t-esc="cell"/></td>
         </tr>
     </table>
 </t>

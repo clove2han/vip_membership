@@ -33,22 +33,21 @@ class vip_pay_details(report_sxw.rml_parse):
         date_start = form['date_start'] + ' 00:00:00'
         date_end = form['date_end'] + ' 23:59:59'
         user_ids = form['user_ids'] or self._get_all_users()
-        pay_ids = charge_obj.search(self.cr, self.uid, [('date','>=',date_start),('date','<=',date_end),('user_id','in',user_ids),])
-        for pay in charge_obj.browse(self.cr, self.uid, pay_ids):
-            if pay.moneys:
-                self.all_money += pay.moneys
-                if (self.min_money == 0) or (self.min_money and pay.moneys < self.min_money):
-                    self.min_money = pay.moneys
-                if pay.moneys > self.max_money:
-                    self.max_money = pay.moneys
+        charge_ids = charge_obj.search(self.cr, self.uid, [('date','>=',date_start),('date','<=',date_end),('user_id','in',user_ids),])
+        for charge in charge_obj.browse(self.cr, self.uid, charge_ids):
+            if charge.moneys:
+                self.all_money += charge.moneys
+                if (self.min_money == 0) or (self.min_money and charge.moneys < self.min_money):
+                    self.min_money = charge.moneys
+                if charge.moneys > self.max_money:
+                    self.max_money = charge.moneys
             result = {
-                'date': pay.date, 
-                'member_id': pay.member_id.member_id,
-                'm_name': pay.member_id.m_name,
-                'name': pay.name,
-                'cost_moneys': pay.cost_moneys,
-                'moneys': pay.moneys,
-                'user_id': pay.user_id.login,
+                'date': charge.date, 
+                'member_id': charge.member_id.member_id,
+                'm_name': charge.member_id.m_name,
+                'name': charge.name.name,
+                'moneys': charge.moneys,
+                'user_id': charge.user_id.login,
             }
             data.append(result)
 

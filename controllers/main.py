@@ -8,6 +8,7 @@ import csv
 import os
 import simplejson
 import operator
+import itertools
 import tempfile
 from cStringIO import StringIO
 try:
@@ -20,6 +21,44 @@ import functools
 from openerp.http import request, serialize_exception as _serialize_exception
 
 MEMBER_CODE = {}
+
+fields_ranking = {
+    'member_id':      0,
+    'm_name':         1,
+    'm_level':        2,
+    'total_money':    3,
+    'cost_moneys':    4,
+    'moneys':         5,
+    'rule_money':     6,
+    'points':         7,
+    'rule_point':     8,
+    'rule_active':    9,
+    'card_status':   10,
+    'name':          11,
+    'm_normal':      12,
+    'm_loss':        13,
+    'm_off':         14,
+    'm_sex':         15,
+    'm_telephone':   16,
+    'm_birthdate':   17,
+    'm_identity_no': 18,
+    'm_email':       19,
+    'm_address':     20,
+    'type':          21,
+    'user_id':       22,
+    'date':          23,
+    'comment':       24,
+}
+def field_cmp(x,y):
+    x = fields_ranking.get(x, 999)
+    y = fields_ranking.get(y, 999)
+    if x < y:
+        return -1
+    elif x == y:
+        return  0
+    else:
+        return 1
+    
 def serialize_exception(f):
     @functools.wraps(f)
     def wrap(*args, **kwargs):
@@ -115,7 +154,12 @@ class vip_membership(http.Controller):
                     member_info['member_id'] = member_data.member_id
                     member_info['card_status'] = member_data.card_status
                     member_info['m_level'] = member_data.m_level.level_name
-                    member_info['discount'] = "%.2f" % (member_data.m_level.percent / float(100))
+
+                    discount = member_data.m_level.percent
+                    if discount == 0:
+                        discount = 100                    
+                    member_info['discount'] = "%.2f" % (discount / float(100))
+                    
                     member_info['total_money'] = member_data.total_money
                     member_info['points'] = member_data.points
                     
@@ -144,7 +188,6 @@ class vip_membership(http.Controller):
         context = {}
         cr, uid = request.cr, openerp.SUPERUSER_ID
         member_id = str(args['member_id'])
-        first_moneys = args['first_moneys']
         last_money = args['last_money']
         points = args['points']
         context['CutMoney'] = last_money
@@ -174,8 +217,7 @@ class vip_membership(http.Controller):
                                                 type=u'消费',
                                                 member_id=member_id,
                                                 name=name,
-                                                money=last_money,
-                                                cost_moneys=first_moneys,)
+                                                money=last_money,)
         if status['flag']:
             #计算积分
             status = request.registry.get('vip.points').oper_points(cr,uid,
@@ -247,7 +289,7 @@ class zip_obj(object):
     def extract_file(self,files):
         f = zipfile.ZipFile(files,'r')
         for file in f.namelist():
-            f.extract(file,"temp/")
+            f.extract(file,self.path)
     
     def read(self):
         '''Returns a string with the contents of the in-memory zip.'''
@@ -288,34 +330,179 @@ class ZIPRecovery(zip_obj, http.Controller):
         ids = Model.search([], 0, False, False, request.context)
         fields = Model.fields_get()
         field_names = [i for i in fields if 'function' not in fields[i]]
-        field_names.sort()
+        field_names.sort(cmp=field_cmp)
         import_data = Model.export_data(ids, field_names, self.raw_data, context=request.context).get('datas',[])
         columns_headers = field_names
         self.data2csv(modename,columns_headers,import_data)
         
     def data2csv(self, modename,fields, rows):
-        print "self.path",self.path
         fullpath = os.path.join(self.path,modename+'.csv')
-        fp = file(fullpath,'w')
+        fp = file(fullpath,'wb+')
         writer = csv.writer(fp, quoting=csv.QUOTE_ALL)
 
         writer.writerow([name.encode('utf-8') for name in fields])
 
         for data in rows:
-            row = []
-            for d in data:
-                if isinstance(d, basestring):
-                    d = d.replace('\n',' ').replace('\t',' ')
-                    try:
-                        d = d.encode('utf-8')
-                    except UnicodeError:
-                        pass
-                if d is False: d = None
-                row.append(d)
-            writer.writerow(row)
+            writer.writerow(self._row(data))
         fp.close()
-
+        
+    def _row(self,data):
+        row = []
+        for d in data:
+            if isinstance(d, basestring):
+                d = d.replace('\n',' ').replace('\t',' ')
+                try:
+                    d = d.encode('utf-8')
+                except UnicodeError:
+                    pass
+            if d is False: d = ''
+            if d is None: d = ''
+            row.append(d)
+        return row
+    
     @http.route('/vip_import/set_file')
     def set_file(self, req, file, jsonp='callback'):
+        res = {'flag':False,
+               'info':'',
+               'result':{}}
+        
+        try:
+            self.extract_file(file)
+        except:
+            res['info'] = u'上传文件失败！'
+            return res
+        
+        res['flag'] = True
+        res['result'] = self.read_csv()
         return 'window.top.%s(%s)' % (
-            jsonp, simplejson.dumps({'result': file.read()}))
+            jsonp, simplejson.dumps(res))
+        
+    def read_csv(self):
+        options = {"headers":True,"encoding":"utf-8","separator":",","quoting":"\""}
+        count = 10000
+        res = {}
+        tmp = os.getcwd()
+        os.chdir(self.path)
+        for i in os.listdir(os.getcwd()):
+            if i.endswith('.csv'):
+                res_model = i[:-4]
+                Model = request.session.model(res_model)
+                fields = Model.fields_get()
+                rows = self._read_csv(open(i).readlines(),options)
+                os.remove(i)
+                headers, matches = self._match_headers(rows, fields, options)
+                if "member_id" in headers:
+                    id_index = headers.index("member_id")
+                    preview = {}
+                    back = list(itertools.islice(rows, count))
+                    for cow in back:
+                        ids = Model.search([('member_id','=',cow[id_index])], 0, False, False, request.context)
+                        data = Model.export_data(ids, headers, self.raw_data, context=request.context).get('datas',[])
+                        back_tmp = self._row(cow)
+                        db_tmp = self._row(data[0])
+                        if back_tmp != db_tmp:
+                            data_tmp = {
+                                "back_data": back_tmp,
+                                "db_data":  db_tmp,
+                            }
+                            preview[cow[id_index]] = data_tmp
+                    if preview:
+                        res[res_model] = {
+                        'model': res_model,
+                        'fields': fields,
+                        'matches': matches or False,
+                        'headers': headers or False,
+                        'preview': preview,
+                        }
+        os.chdir(tmp)
+        return res
+    
+    def _read_csv(self, csvfile, options):
+        """ Returns a CSV-parsed iterator of all empty lines in the file
+
+        :throws csv.Error: if an error is detected during CSV parsing
+        :throws UnicodeDecodeError: if ``options.encoding`` is incorrect
+        """
+        csv_iterator = csv.reader(
+            csvfile,
+            quotechar=str(options['quoting']),
+            delimiter=str(options['separator']))
+        csv_nonempty = itertools.ifilter(None, csv_iterator)
+        # TODO: guess encoding with chardet? Or https://github.com/aadsm/jschardet
+        encoding = options.get('encoding', 'utf-8')
+        return itertools.imap(
+            lambda row: [item.decode(encoding) for item in row],
+            csv_nonempty)
+        
+    def ifilter_data(self,data):
+        res = []
+        for i in data:
+            if i == '':
+                i = False
+            res.append(i)
+        return res
+                
+        
+    def _match_headers(self, rows, fields, options):
+        """ Attempts to match the imported model's fields to the
+        titles of the parsed CSV file, if the file is supposed to have
+        headers.
+
+        Will consume the first line of the ``rows`` iterator.
+
+        Returns a pair of (None, None) if headers were not requested
+        or the list of headers and a dict mapping cell indices
+        to key paths in the ``fields`` tree
+
+        :param Iterator rows:
+        :param dict fields:
+        :param dict options:
+        :rtype: (None, None) | (list(str), dict(int: list(str)))
+        """
+        if not options.get('headers'):
+            return None, None
+
+        headers = next(rows)
+        return headers, dict(
+            (index, [field['name'] for field in self._match_header(header, fields, options)] or None)
+            for index, header in enumerate(headers)
+        )
+        
+    def _match_header(self, header, fields, options):
+        """ Attempts to match a given header to a field of the
+        imported model.
+
+        :param str header: header name from the CSV file
+        :param fields:
+        :param dict options:
+        :returns: an empty list if the header couldn't be matched, or
+                  all the fields to traverse
+        :rtype: list(Field)
+        """
+        for field in fields:
+            field_dict = fields[field]
+            # FIXME: should match all translations & original
+            # TODO: use string distance (levenshtein? hamming?)
+            if header == field \
+              or header.lower() == field_dict['string'].lower():
+                field_dict['name'] = field
+                return [field_dict]
+
+        if '/' not in header:
+            return []
+
+        # relational field path
+        traversal = []
+        subfields = fields
+        # Iteratively dive into fields tree
+        for section in header.split('/'):
+            # Strip section in case spaces are added around '/' for
+            # readability of paths
+            match = self._match_header(section.strip(), subfields, options)
+            # Any match failure, exit
+            if not match: return []
+            # prep subfields for next iteration within match[0]
+            field = match[0]
+            subfields = field['fields']
+            traversal.append(field)
+        return traversal

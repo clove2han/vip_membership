@@ -5,6 +5,7 @@ from random import sample
 from string import ascii_letters, digits
 import time
 import openerp
+import re
 import urllib2
 from AES import AESModeOfOperation,encryptData,decryptData
 
@@ -42,7 +43,7 @@ class vip_money(osv.osv):
         'total_money': 0,
     }
 
-    def oper_money(self,cr,uid,type,member_id,money,cost_moneys=0,name='',comment='',context=None):
+    def oper_money(self,cr,uid,type,member_id,money,name='',comment='',context=None):
         '''
         type:正常充值，赠送金额，消费
         member_id:会员卡号
@@ -82,7 +83,6 @@ class vip_money(osv.osv):
                     #消费记录
                     new_records = {
                         'member_id': mem_ids,
-                        'cost_moneys':cost_moneys,
                         'moneys': money,
                         'user_id': uid,
                         'name': name,
@@ -271,7 +271,20 @@ class vip_member(osv.osv):
     _sql_constraints = [
         ('name_uniq', 'unique(member_id)',u'会员卡号已存在！'),
     ]
+    def _check_meber_id(self, cr, uid, ids, context = None):
+        for wiz in self.browse(cr, uid, ids, context = context):
+            member_id = wiz.member_id
+            if (member_id):
+                state = re.match(r"^\w+$",member_id)
+                if state:
+                    return True
+        return False
 
+    _constraints = [
+        (_check_meber_id,u'会员卡号必须为数字或字母',['member_id']),  # 会员卡号必须为数字或字母
+
+    ]
+    
     def name_get(self, cr, uid, ids, context=None):
         res = []
         for inst in self.browse(cr, uid, ids, context=context):
@@ -442,7 +455,6 @@ class vip_money_log(osv.osv):
 
     _columns = {
         'member_id': fields.many2one('vip.member',string=u'会员卡号', select=True, ondelete='cascade', required=True),
-        'cost_moneys': fields.float(u'折前价', digits=(16,2), required=True),
         'moneys': fields.float(u'消费金额', digits=(16,2), required=True),
         'name': fields.char(u'销售点名称', size=32,required=True),
         'date':  fields.datetime(u'日期', readonly=True, select=True),
@@ -530,7 +542,12 @@ class vip_setpoints(osv.osv):
         'rule_point': fields.integer(u'返回积分', required=True, help=u'返回积分'),
         'rule_active': fields.boolean(u'激活状态', required=True,help=u'当处于激活状态时，会员消费可为会员积分'),
     }
-    
+
+    _sql_constraints = [
+        ('money_greater_than_0', 'CHECK (rule_money>=0)', u'消费金额不能小于0'),
+        ('point_greater_than_0', 'CHECK (rule_point>=0)', u'返回积分不能小于0'),
+    ]
+     
     _defaults = {
         'rule_money': 1,
         'rule_point': 1,
@@ -557,6 +574,10 @@ class vip_product(osv.osv):
         'comment': fields.char(u'备注',size=128),
     }
     
+    _sql_constraints = [
+        ('greater_than_0', 'CHECK (product_point>=0)', u'积分值不能小于0'),
+    ]
+    
     _defaults = {
         'product_point': 0,
         'product_status': 1
@@ -577,11 +598,14 @@ class vip_level(osv.osv):
         'level_name': fields.char(u'等级名称', size=10, required=True, help=u'设置会员等级的名称'),
         'min_money': fields.float(u'最小金额', digits=(16,2),required=True, help=u'最小金额上限'),
         'max_money': fields.float(u'最大金额', digits=(16,2),required=True, help=u'最大金额上限'),
-        'percent': fields.integer(u'享受折扣',digits=(16,2),required=True,help=u'该会员等级享受的折扣，填写88表示为打8.8折'),
+        'percent': fields.integer(u'享受折扣',digits=(16,2),required=True,help=u'该会员等级享受的折扣，取值范围：0-99的整数，输入0表示不打折，90表示为打9折，即原价100元，折后价为90元！'),
     }
     
     _sql_constraints = [
-        ('percent_low_than_1', 'CHECK (percent<=100)', u'折扣值不能大于100!'),
+        ('percent_low_than_100', 'CHECK (percent<100)', u'折扣值必须小于100!'),
+        ('percent_greater_than_0', 'CHECK (percent>=0)', u'折扣值不能小于0'),
+        ('min_greater_than_0', 'CHECK (min_money>=0)', u'最小金额不能小于0'),
+        ('max_greater_than_0', 'CHECK (max_money>=0)', u'最大金额不能小于0'),
         ('percent_uniq', 'unique(percent)',u'享受折扣不能和其他重复！'),
         ('percent_min_low_max', 'CHECK(min_money<=max_money)',u'最大金额必须大于等于最小金额！'),
     ]
@@ -595,7 +619,7 @@ class vip_level(osv.osv):
         
     _defaults = {
         'min_money': get_max_money,
-        'percent': 1.0,
+        'percent': 0,
     }
 
     def name_get(self, cr, uid, ids, context=None):

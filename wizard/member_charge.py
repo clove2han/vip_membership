@@ -87,7 +87,13 @@ class member_charge(osv.osv_memory):
                     new_level = records[0]
             if new_level:
                 # 如果新的折扣小于旧的折扣，则提示窗口
-                if new_level.get('percent') < old_level.percent:
+                old_percent = old_level.percent
+                new_percent = new_level.get('percent')
+                if old_percent == 0:
+                    old_percent = 100
+                if new_percent == 0:
+                    new_percent = 100
+                if new_percent < old_percent:
                     ctx = context.copy()
                     ctx.update({'id': mem_obj.id,
                                 'level_id': new_level['id'],

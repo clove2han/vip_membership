@@ -180,7 +180,7 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="60.0,96.0,60.0,48.0,48.0,96.0,96.0" style="Table4">
+    <blockTable colWidths="100.0,80.0,32.0,100.0,100.0,100.0" style="Table4">
       <tr>
         <td>
           <para style="terp_default_9">消费日期</para>
@@ -190,9 +190,6 @@
         </td>
         <td>
           <para style="terp_default_9">姓名</para>
-        </td>
-        <td>
-          <para style="terp_default_9">折前价</para>
         </td>
         <td>
           <para style="terp_default_9">消费金额</para>
@@ -207,7 +204,7 @@
     </blockTable>
     <section>
       <para style="terp_default_1">[[ repeatIn(vip_pay_info(data['form']), 'line_ids') ]]</para>
-      <blockTable colWidths="60.0,96.0,60.0,48.0,48.0,96.0,96.0" style="Table6">
+      <blockTable colWidths="100.0,80.0,32.0,100.0,100.0,100.0" style="Table6">
         <tr>
           <td>
             <para style="terp_default_9">[[ formatLang(line_ids['date'],date=True) ]]</para>
@@ -217,9 +214,6 @@
           </td>
           <td>
             <para style="terp_default_9">[[ line_ids['m_name'] ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_9">[[ line_ids['cost_moneys'] ]]</para>
           </td>
           <td>
             <para style="terp_default_9">[[ line_ids['moneys'] ]]</para>
